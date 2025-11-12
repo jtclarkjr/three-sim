@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { DoubleSide } from 'three'
 import { OrbitControls } from '@react-three/drei'
 import { GridSquare } from './GridSquare'
 import { DraggedPiece } from './DraggedPiece'
@@ -108,7 +109,7 @@ export const GridScene = () => {
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow position={[0, -0.01, 0]}>
         <planeGeometry args={[gridSize, gridSize]} />
-        <meshStandardMaterial color="#1a1a1a" />
+        <meshStandardMaterial color="#1a1a1a" side={DoubleSide} />
       </mesh>
     </>
   )

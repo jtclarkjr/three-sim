@@ -17,7 +17,7 @@ interface Scene3DProps {
 export const Scene3D = ({ 
   children, 
   camera = { position: [0, 1, 6], fov: 50 },
-  className = "w-full h-[28rem] md:h-[40rem]",
+  className = "w-full h-[36rem] md:h-[50rem]",
   useDragControls: enableDragControls = true,
   showFloor = true
 }: Scene3DProps) => {

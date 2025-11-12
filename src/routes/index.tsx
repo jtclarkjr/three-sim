@@ -35,7 +35,8 @@ function App() {
           <select
             value={selectedWord}
             onChange={(e) => setSelectedWord(e.target.value as Shape)}
-            className="bg-transparent border-2 border-cyan-400/50 rounded-lg px-4 py-2 text-cyan-400 font-black text-6xl md:text-7xl cursor-pointer hover:border-cyan-400 transition-colors [letter-spacing:-0.08em] w-auto"
+            className="appearance-none bg-transparent rounded-lg px-4 py-2 text-cyan-400 font-black text-6xl md:text-7xl cursor-pointer hover:border-cyan-400 transition-colors [letter-spacing:-0.08em] w-auto"
+
           >
             {shapes.map((shape) => (
               <option key={shape} value={shape} className="bg-slate-800 text-cyan-400">

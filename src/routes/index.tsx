@@ -1,16 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-import { RotatingCone } from '../components/RotatingCone'
-import { RotatingCube } from '../components/RotatingCube'
-import { RotatingSphere } from '../components/RotatingSphere'
-import { RotatingTorus } from '../components/RotatingTorus'
-import { RotatingCard } from '../components/RotatingCard'
+import { RotatingCone } from '@/components/RotatingCone'
+import { RotatingCube } from '@/components/RotatingCube'
+import { RotatingSphere } from '@/components/RotatingSphere'
+import { RotatingTorus } from '@/components/RotatingTorus'
+import { RotatingCard } from '@/components/RotatingCard'
+import { GridFloor } from '@/components/grid/GridFloor'
 
 export const Route = createFileRoute('/')({ component: App })
 
-type Shape = 'CARD' | 'CUBE' | 'SPHERE' | 'TORUS' | 'CONE'
+type Shape = 'GRID' | 'CARD' | 'CUBE' | 'SPHERE' | 'TORUS' | 'CONE'
 
-const shapes: Shape[] = ['CARD', 'CUBE', 'SPHERE', 'TORUS', 'CONE']
+const shapes: Shape[] = ['GRID', 'CARD', 'CUBE', 'SPHERE', 'TORUS', 'CONE', ]
 
 const shapeComponents: Record<Shape, React.JSX.Element> = {
   CARD: <RotatingCard />,
@@ -18,10 +19,11 @@ const shapeComponents: Record<Shape, React.JSX.Element> = {
   SPHERE: <RotatingSphere />,
   TORUS: <RotatingTorus />,
   CONE: <RotatingCone />,
+  GRID: <GridFloor />,
 }
 
 function App() {
-  const [selectedWord, setSelectedWord] = useState<Shape>('CARD')
+  const [selectedWord, setSelectedWord] = useState<Shape>('GRID')
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">

@@ -6,7 +6,7 @@ export const Route = createFileRoute('/robots')({ component: RobotsMap })
 
 function RobotsMap() {
   const [productCount, setProductCount] = useState(20000)
-  const [robotCount, setRobotCount] = useState(10)
+  const [robotCount, setRobotCount] = useState(30)
   const [key, setKey] = useState(0)
   const productRangeId = useId()
   const robotRangeId = useId()

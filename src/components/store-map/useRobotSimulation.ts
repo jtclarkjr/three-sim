@@ -3,6 +3,7 @@ import { STORE_BOUNDS } from './mockData'
 import type { Product, Robot } from './types'
 
 const UPDATE_INTERVAL = 100 // 10 times per second
+const STUCK_TIMEOUT = 3000 // If robot hasn't moved in 3 seconds, force reset
 
 // Aisle configuration matching mockData.ts
 const NUM_AISLES = 6 // Fewer aisles to fit in store
@@ -180,6 +181,20 @@ export function useRobotSimulation(
     const intervalId = setInterval(() => {
       setRobots((currentRobots) => {
         return currentRobots.map((robot) => {
+          const currentTime = Date.now()
+          const timeSinceLastMove = currentTime - (robot.lastMoveTime ?? currentTime)
+          
+          // Force reset if robot hasn't moved in STUCK_TIMEOUT milliseconds
+          if (timeSinceLastMove > STUCK_TIMEOUT) {
+            const newDest = getValidDestination()
+            return {
+              ...robot,
+              destX: newDest.x,
+              destY: newDest.y,
+              lastMoveTime: currentTime
+            }
+          }
+          
           const dx = robot.destX - robot.x
           const dy = robot.destY - robot.y
           const distance = Math.sqrt(dx * dx + dy * dy)
@@ -236,8 +251,6 @@ export function useRobotSimulation(
           // Check for collisions with products
           const collidedProduct = checkProductCollision(newX, newY, products)
 
-          const finalVelocityX = moveX
-          const finalVelocityY = moveY
           let newDestX = robot.destX
           let newDestY = robot.destY
 
@@ -264,11 +277,12 @@ export function useRobotSimulation(
             const reflectedY = toDestNormY - 2 * dotProduct * normalY
 
             // Set new destination in the bounced direction
-            const bounceDistance = 20 // How far to travel after bounce
+            // Use larger bounce distance to ensure robot travels far enough
+            const bounceDistance = 50
             newDestX = robot.x + reflectedX * bounceDistance
             newDestY = robot.y + reflectedY * bounceDistance
 
-            // Clamp to store bounds
+            // Clamp to store bounds and walkway areas
             newDestX = Math.max(
               -STORE_BOUNDS.width / 2 + 10,
               Math.min(STORE_BOUNDS.width / 2 - 10, newDestX)
@@ -277,6 +291,13 @@ export function useRobotSimulation(
               -STORE_BOUNDS.height / 2 + 10,
               Math.min(STORE_BOUNDS.height / 2 - 10, newDestY)
             )
+            
+            // If bounced destination isn't in a walkway, find a valid one
+            if (!isInAisleWalkway(newDestX, newDestY)) {
+              const validDest = getValidDestination()
+              newDestX = validDest.x
+              newDestY = validDest.y
+            }
 
             // Push robot slightly away from product
             const pushDistance =
@@ -296,6 +317,10 @@ export function useRobotSimulation(
           }
 
           const newOrientation = Math.atan2(newX - robot.x, newY - robot.y)
+          
+          // Check if robot actually moved
+          const hasMoved = Math.abs(newX - robot.x) > 0.01 || Math.abs(newY - robot.y) > 0.01
+          const lastMoveTime = hasMoved ? Date.now() : (robot.lastMoveTime ?? Date.now())
 
           return {
             ...robot,
@@ -304,8 +329,7 @@ export function useRobotSimulation(
             orientation: newOrientation,
             destX: newDestX,
             destY: newDestY,
-            velocityX: finalVelocityX,
-            velocityY: finalVelocityY
+            lastMoveTime
           }
         })
       })

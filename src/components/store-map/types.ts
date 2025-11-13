@@ -13,6 +13,5 @@ export interface Robot {
   speed: number
   destX: number
   destY: number
-  velocityX?: number // for bounce physics
-  velocityY?: number // for bounce physics
+  lastMoveTime?: number // Track last time robot moved
 }

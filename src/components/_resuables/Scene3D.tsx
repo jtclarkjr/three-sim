@@ -2,6 +2,8 @@ import { Canvas } from '@react-three/fiber'
 import type { ReactNode } from 'react'
 import { useDragControls } from '@/hooks/useDragControls'
 import { Floor } from './Floor'
+import { Environment } from '@react-three/drei'
+import { Suspense } from 'react'
 
 interface Scene3DProps {
   children: (props: {
@@ -57,6 +59,9 @@ export const Scene3D = ({
           shadow-camera-top={10}
           shadow-camera-bottom={-10}
         />
+        <Suspense fallback={null}>
+          <Environment preset="city" />
+        </Suspense>
         {children({ isDragging, rotationDelta })}
         {showFloor && <Floor />}
       </Canvas>

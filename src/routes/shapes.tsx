@@ -31,7 +31,7 @@ function App() {
         to="/"
         className="absolute top-6 right-6 z-10 bg-slate-800/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg text-cyan-400 hover:text-cyan-300 hover:bg-slate-700/90 transition-colors font-semibold"
       >
-        ← Robot Map
+        Home
       </Link>
 
       <section className="py-20 px-6 vh-100 text-center overflow-hidden">

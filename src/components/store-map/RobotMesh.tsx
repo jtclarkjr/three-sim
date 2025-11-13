@@ -1,3 +1,4 @@
+import { Text } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
 import type { Mesh } from 'three'
@@ -5,9 +6,10 @@ import type { Robot } from './types'
 
 interface RobotMeshProps {
   robot: Robot
+  showLabel?: boolean
 }
 
-export function RobotMesh({ robot }: RobotMeshProps) {
+export function RobotMesh({ robot, showLabel = false }: RobotMeshProps) {
   const meshRef = useRef<Mesh>(null)
   const bodyRef = useRef<Mesh>(null)
 
@@ -57,6 +59,22 @@ export function RobotMesh({ robot }: RobotMeshProps) {
         <cylinderGeometry args={[0.3, 0.3, 1, 8]} />
         <meshStandardMaterial color="#00a8cc" />
       </mesh>
+
+      {showLabel && (
+        // Need to fix THREE.WebGLRenderer: Context Lost on first render issue
+        // <Text
+        //   position={[0, 4, 0]}
+        //   fontSize={0.8}
+        //   color="#00d4ff"
+        //   anchorX="center"
+        //   anchorY="middle"
+        //   outlineWidth={0.02}
+        //   outlineColor="#000000"
+        // >
+        //   {robot.name}
+        // </Text>
+        <></>
+      )}
     </group>
   )
 }

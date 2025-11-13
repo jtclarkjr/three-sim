@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ShapesRouteImport } from './routes/shapes'
+import { Route as RobotsRouteImport } from './routes/robots'
 import { Route as IndexRouteImport } from './routes/index'
 
 const ShapesRoute = ShapesRouteImport.update({
   id: '/shapes',
   path: '/shapes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsRoute = RobotsRouteImport.update({
+  id: '/robots',
+  path: '/robots',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,27 +31,31 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/robots': typeof RobotsRoute
   '/shapes': typeof ShapesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/robots': typeof RobotsRoute
   '/shapes': typeof ShapesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/robots': typeof RobotsRoute
   '/shapes': typeof ShapesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/shapes'
+  fullPaths: '/' | '/robots' | '/shapes'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/shapes'
-  id: '__root__' | '/' | '/shapes'
+  to: '/' | '/robots' | '/shapes'
+  id: '__root__' | '/' | '/robots' | '/shapes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  RobotsRoute: typeof RobotsRoute
   ShapesRoute: typeof ShapesRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/shapes'
       fullPath: '/shapes'
       preLoaderRoute: typeof ShapesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots': {
+      id: '/robots'
+      path: '/robots'
+      fullPath: '/robots'
+      preLoaderRoute: typeof RobotsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  RobotsRoute: RobotsRoute,
   ShapesRoute: ShapesRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,88 +1,43 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { useId, useState } from 'react'
-import { StoreMapScene } from '@/components/store-map/StoreMapScene'
 
-export const Route = createFileRoute('/')({ component: RobotsMap })
+export const Route = createFileRoute('/')({ component: Home })
 
-function RobotsMap() {
-  const [productCount, setProductCount] = useState(20000)
-  const [robotCount, setRobotCount] = useState(10)
-  const [key, setKey] = useState(0)
-  const productRangeId = useId()
-  const robotRangeId = useId()
-
-  const handleReset = () => {
-    setKey((prev) => prev + 1)
-  }
-
+function Home() {
   return (
-    <div className="relative w-full h-screen bg-slate-900">
-      <Link
-        to="/shapes"
-        className="absolute top-4 right-4 z-10 bg-slate-800/90 backdrop-blur-sm p-3 rounded-lg shadow-lg text-cyan-400 hover:text-cyan-300 hover:bg-slate-700/90 transition-colors font-semibold"
-      >
-        Shapes →
-      </Link>
-
-      <div className="absolute top-4 left-4 z-10 bg-slate-800/90 backdrop-blur-sm p-4 rounded-lg shadow-lg text-white">
-        <h2 className="text-xl font-bold mb-3 text-cyan-400">
-          Robots in store simulation
-        </h2>
-
-        <div className="space-y-3 text-sm">
-          <div>
-            <label
-              htmlFor={productRangeId}
-              className="block mb-1 text-gray-300"
-            >
-              Products: {productCount.toLocaleString()}
-            </label>
-            <input
-              id={productRangeId}
-              type="range"
-              min="1000"
-              max="100000"
-              step="1000"
-              value={productCount}
-              onChange={(e) => setProductCount(Number(e.target.value))}
-              className="w-full"
-            />
-          </div>
-
-          <div>
-            <label htmlFor={robotRangeId} className="block mb-1 text-gray-300">
-              Robots: {robotCount}
-            </label>
-            <input
-              id={robotRangeId}
-              type="range"
-              min="1"
-              max="50"
-              value={robotCount}
-              onChange={(e) => setRobotCount(Number(e.target.value))}
-              className="w-full"
-            />
-          </div>
-
-          <button
-            type="button"
-            onClick={handleReset}
-            className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-semibold py-2 px-4 rounded transition-colors"
+    <div className="relative w-full h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 pointer-events-none" />
+      
+      <div className="relative z-10 text-center space-y-12">
+        <h1 className="text-7xl md:text-8xl font-black text-white [letter-spacing:-0.045em] mb-8">
+          <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+            Three Sim
+          </span>
+        </h1>
+        
+        <p className="text-xl text-gray-400 mb-12">
+          Explore 3D scenes and simulations
+        </p>
+        
+        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+          <Link
+            to="/shapes"
+            className="group relative px-8 py-4 bg-cyan-500/10 border-2 border-cyan-400/50 rounded-lg hover:bg-cyan-500/20 hover:border-cyan-400 transition-all duration-300 shadow-lg hover:shadow-cyan-500/50"
           >
-            Reset Positions
-          </button>
-        </div>
-
-        <div className="mt-3 pt-3 border-t border-gray-700 text-xs text-gray-400">
-          <p>Use mouse to pan, zoom, and rotate the view</p>
+            <span className="text-2xl font-bold text-cyan-400 group-hover:text-cyan-300 transition-colors">
+              Shapes
+            </span>
+          </Link>
+          
+          <Link
+            to="/robots"
+            className="group relative px-8 py-4 bg-purple-500/10 border-2 border-purple-400/50 rounded-lg hover:bg-purple-500/20 hover:border-purple-400 transition-all duration-300 shadow-lg hover:shadow-purple-500/50"
+          >
+            <span className="text-2xl font-bold text-purple-400 group-hover:text-purple-300 transition-colors">
+              Robots
+            </span>
+          </Link>
         </div>
       </div>
-
-      <StoreMapScene
-        key={key}
-        productCount={productCount}
-        robotCount={robotCount}
-      />
     </div>
   )
 }

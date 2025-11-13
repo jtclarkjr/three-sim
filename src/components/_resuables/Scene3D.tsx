@@ -1,9 +1,9 @@
+import { Environment } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import type { ReactNode } from 'react'
+import { Suspense } from 'react'
 import { useDragControls } from '@/hooks/useDragControls'
 import { Floor } from './Floor'
-import { Environment } from '@react-three/drei'
-import { Suspense } from 'react'
 
 interface Scene3DProps {
   children: (props: {

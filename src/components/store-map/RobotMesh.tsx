@@ -1,4 +1,3 @@
-import { Text } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
 import type { Mesh } from 'three'
@@ -73,7 +72,7 @@ export function RobotMesh({ robot, showLabel = false }: RobotMeshProps) {
         // >
         //   {robot.name}
         // </Text>
-        <></>
+        null
       )}
     </group>
   )

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Product, Robot } from './types'
 import { STORE_BOUNDS } from './mockData'
+import type { Product, Robot } from './types'
 
 const UPDATE_INTERVAL = 100 // 10 times per second
 
@@ -100,6 +100,7 @@ function getValidDestination(): { x: number; y: number } {
 const ROBOT_RADIUS = 2
 const PRODUCT_RADIUS = 0.5
 const COLLISION_BUFFER = 0.5
+const BOUNCE_DAMPING = 0.8 // Energy retained after bounce (0-1)
 
 function _checkRobotCollision(
   x: number,
@@ -120,13 +121,48 @@ function checkProductCollision(
   x: number,
   y: number,
   products: Product[]
-): boolean {
-  return products.some((product) => {
+): Product | null {
+  for (const product of products) {
     const dx = x - product.x
     const dy = y - product.y
     const distance = Math.sqrt(dx * dx + dy * dy)
-    return distance < ROBOT_RADIUS + PRODUCT_RADIUS + COLLISION_BUFFER
-  })
+    if (distance < ROBOT_RADIUS + PRODUCT_RADIUS + COLLISION_BUFFER) {
+      return product
+    }
+  }
+  return null
+}
+
+function _calculateBounceVelocity(
+  robotX: number,
+  robotY: number,
+  velocityX: number,
+  velocityY: number,
+  productX: number,
+  productY: number
+): { vx: number; vy: number } {
+  // Calculate collision normal (from product to robot)
+  const dx = robotX - productX
+  const dy = robotY - productY
+  const distance = Math.sqrt(dx * dx + dy * dy)
+
+  // Normalize the collision normal
+  const normalX = dx / distance
+  const normalY = dy / distance
+
+  // Calculate dot product of velocity and normal
+  const dotProduct = velocityX * normalX + velocityY * normalY
+
+  // Reflect velocity vector across the normal
+  // v' = v - 2(v·n)n
+  const reflectedVx = velocityX - 2 * dotProduct * normalX
+  const reflectedVy = velocityY - 2 * dotProduct * normalY
+
+  // Apply damping to simulate energy loss
+  return {
+    vx: reflectedVx * BOUNCE_DAMPING,
+    vy: reflectedVy * BOUNCE_DAMPING
+  }
 }
 
 export function useRobotSimulation(
@@ -198,42 +234,64 @@ export function useRobotSimulation(
           }
 
           // Check for collisions with products
-          if (checkProductCollision(newX, newY, products)) {
-            // Random avoidance angle for more spontaneous movement
-            const avoidAngle = (Math.random() - 0.5) * Math.PI
-            const avoidX = robot.x + Math.cos(avoidAngle) * moveAmount
-            const avoidY = robot.y + Math.sin(avoidAngle) * moveAmount
+          const collidedProduct = checkProductCollision(newX, newY, products)
 
-            if (
-              isInAisleWalkway(avoidX, avoidY) &&
-              !checkProductCollision(avoidX, avoidY, products)
-            ) {
-              newX = avoidX
-              newY = avoidY
-            } else {
-              // Try perpendicular movements as fallback
-              const perpX1 = robot.x + moveY
-              const perpY1 = robot.y - moveX
-              const perpX2 = robot.x - moveY
-              const perpY2 = robot.y + moveX
+          const finalVelocityX = moveX
+          const finalVelocityY = moveY
+          let newDestX = robot.destX
+          let newDestY = robot.destY
 
-              if (
-                isInAisleWalkway(perpX1, perpY1) &&
-                !checkProductCollision(perpX1, perpY1, products)
-              ) {
-                newX = perpX1
-                newY = perpY1
-              } else if (
-                isInAisleWalkway(perpX2, perpY2) &&
-                !checkProductCollision(perpX2, perpY2, products)
-              ) {
-                newX = perpX2
-                newY = perpY2
-              } else {
-                // Stay in place
-                newX = robot.x
-                newY = robot.y
-              }
+          if (collidedProduct) {
+            // Calculate bounce direction
+            const dx = robot.x - collidedProduct.x
+            const dy = robot.y - collidedProduct.y
+            const dist = Math.sqrt(dx * dx + dy * dy)
+
+            // Normalize collision normal
+            const normalX = dx / dist
+            const normalY = dy / dist
+
+            // Reflect the direction to destination across the normal
+            const toDestX = robot.destX - robot.x
+            const toDestY = robot.destY - robot.y
+            const toDestDist = Math.sqrt(toDestX * toDestX + toDestY * toDestY)
+            const toDestNormX = toDestX / toDestDist
+            const toDestNormY = toDestY / toDestDist
+
+            // Reflect destination direction using v' = v - 2(v·n)n
+            const dotProduct = toDestNormX * normalX + toDestNormY * normalY
+            const reflectedX = toDestNormX - 2 * dotProduct * normalX
+            const reflectedY = toDestNormY - 2 * dotProduct * normalY
+
+            // Set new destination in the bounced direction
+            const bounceDistance = 20 // How far to travel after bounce
+            newDestX = robot.x + reflectedX * bounceDistance
+            newDestY = robot.y + reflectedY * bounceDistance
+
+            // Clamp to store bounds
+            newDestX = Math.max(
+              -STORE_BOUNDS.width / 2 + 10,
+              Math.min(STORE_BOUNDS.width / 2 - 10, newDestX)
+            )
+            newDestY = Math.max(
+              -STORE_BOUNDS.height / 2 + 10,
+              Math.min(STORE_BOUNDS.height / 2 - 10, newDestY)
+            )
+
+            // Push robot slightly away from product
+            const pushDistance =
+              ROBOT_RADIUS + PRODUCT_RADIUS + COLLISION_BUFFER + 0.2
+            newX = collidedProduct.x + normalX * pushDistance
+            newY = collidedProduct.y + normalY * pushDistance
+
+            // Make sure in a valid area
+            if (!isInAisleWalkway(newX, newY)) {
+              newX = robot.x
+              newY = robot.y
+              // Pick a random new destination instead
+              const randomDest = getValidDestination()
+              newDestX = randomDest.x
+              newDestY = randomDest.y
             }
           }
 
@@ -243,7 +301,11 @@ export function useRobotSimulation(
             ...robot,
             x: newX,
             y: newY,
-            orientation: newOrientation
+            orientation: newOrientation,
+            destX: newDestX,
+            destY: newDestY,
+            velocityX: finalVelocityX,
+            velocityY: finalVelocityY
           }
         })
       })

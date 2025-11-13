@@ -13,4 +13,6 @@ export interface Robot {
   speed: number
   destX: number
   destY: number
+  velocityX?: number // for bounce physics
+  velocityY?: number // for bounce physics
 }

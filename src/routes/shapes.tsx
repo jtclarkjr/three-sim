@@ -1,4 +1,4 @@
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { GridFloor } from '@/components/grid/GridFloor'
 import { RotatingCard } from '@/components/RotatingCard'

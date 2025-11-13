@@ -73,7 +73,11 @@ export function StoreMapScene({
         <Products products={products} />
 
         {robots.map((robot) => (
-          <RobotMesh key={robot.id} robot={robot} showLabel={robotCount <= 20} />
+          <RobotMesh
+            key={robot.id}
+            robot={robot}
+            showLabel={robotCount <= 20}
+          />
         ))}
 
         <OrbitControls

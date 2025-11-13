@@ -1,4 +1,4 @@
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useId, useState } from 'react'
 import { StoreMapScene } from '@/components/store-map/StoreMapScene'
 

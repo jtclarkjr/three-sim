@@ -9,12 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as RobotsMapRouteImport } from './routes/robots-map'
+import { Route as ShapesRouteImport } from './routes/shapes'
 import { Route as IndexRouteImport } from './routes/index'
 
-const RobotsMapRoute = RobotsMapRouteImport.update({
-  id: '/robots-map',
-  path: '/robots-map',
+const ShapesRoute = ShapesRouteImport.update({
+  id: '/shapes',
+  path: '/shapes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,37 +25,37 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/robots-map': typeof RobotsMapRoute
+  '/shapes': typeof ShapesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/robots-map': typeof RobotsMapRoute
+  '/shapes': typeof ShapesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/robots-map': typeof RobotsMapRoute
+  '/shapes': typeof ShapesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/robots-map'
+  fullPaths: '/' | '/shapes'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/robots-map'
-  id: '__root__' | '/' | '/robots-map'
+  to: '/' | '/shapes'
+  id: '__root__' | '/' | '/shapes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  RobotsMapRoute: typeof RobotsMapRoute
+  ShapesRoute: typeof ShapesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/robots-map': {
-      id: '/robots-map'
-      path: '/robots-map'
-      fullPath: '/robots-map'
-      preLoaderRoute: typeof RobotsMapRouteImport
+    '/shapes': {
+      id: '/shapes'
+      path: '/shapes'
+      fullPath: '/shapes'
+      preLoaderRoute: typeof ShapesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -70,7 +70,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  RobotsMapRoute: RobotsMapRoute,
+  ShapesRoute: ShapesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

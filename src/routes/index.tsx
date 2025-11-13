@@ -1,63 +1,88 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
-import { GridFloor } from '@/components/grid/GridFloor'
-import { RotatingCard } from '@/components/RotatingCard'
-import { RotatingCone } from '@/components/RotatingCone'
-import { RotatingCube } from '@/components/RotatingCube'
-import { RotatingSphere } from '@/components/RotatingSphere'
-import { RotatingTorus } from '@/components/RotatingTorus'
+import { useId, useState } from 'react'
+import { StoreMapScene } from '@/components/store-map/StoreMapScene'
 
-export const Route = createFileRoute('/')({ component: App })
+export const Route = createFileRoute('/')({ component: RobotsMap })
 
-type Shape = 'GRID' | 'CARD' | 'CUBE' | 'SPHERE' | 'TORUS' | 'CONE'
+function RobotsMap() {
+  const [productCount, setProductCount] = useState(20000)
+  const [robotCount, setRobotCount] = useState(10)
+  const [key, setKey] = useState(0)
+  const productRangeId = useId()
+  const robotRangeId = useId()
 
-const shapes: Shape[] = ['GRID', 'CARD', 'CUBE', 'SPHERE', 'TORUS', 'CONE']
-
-const shapeComponents: Record<Shape, React.JSX.Element> = {
-  CARD: <RotatingCard />,
-  CUBE: <RotatingCube />,
-  SPHERE: <RotatingSphere />,
-  TORUS: <RotatingTorus />,
-  CONE: <RotatingCone />,
-  GRID: <GridFloor />
-}
-
-function App() {
-  const [selectedWord, setSelectedWord] = useState<Shape>('GRID')
+  const handleReset = () => {
+    setKey((prev) => prev + 1)
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+    <div className="relative w-full h-screen bg-slate-900">
       <Link
-        to="/robots-map"
-        className="absolute top-6 right-6 z-10 bg-slate-800/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg text-cyan-400 hover:text-cyan-300 hover:bg-slate-700/90 transition-colors font-semibold"
+        to="/shapes"
+        className="absolute top-4 right-4 z-10 bg-slate-800/90 backdrop-blur-sm p-3 rounded-lg shadow-lg text-cyan-400 hover:text-cyan-300 hover:bg-slate-700/90 transition-colors font-semibold"
       >
-        Robot Map →
+        Shapes →
       </Link>
 
-      <section className="py-20 px-6 vh-100 text-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 pointer-events-none" />
+      <div className="absolute top-4 left-4 z-10 bg-slate-800/90 backdrop-blur-sm p-4 rounded-lg shadow-lg text-white">
+        <h2 className="text-xl font-bold mb-3 text-cyan-400">
+          Robots in store simulation
+        </h2>
 
-        <h1 className="text-6xl md:text-7xl font-black text-white [letter-spacing:-0.08em] mb-12">
-          <span className="text-gray-300">Three</span>{' '}
-          <select
-            value={selectedWord}
-            onChange={(e) => setSelectedWord(e.target.value as Shape)}
-            className="appearance-none bg-transparent rounded-lg px-4 py-2 text-cyan-400 font-black text-6xl md:text-7xl cursor-pointer hover:border-cyan-400 transition-colors [letter-spacing:-0.08em] w-auto"
+        <div className="space-y-3 text-sm">
+          <div>
+            <label
+              htmlFor={productRangeId}
+              className="block mb-1 text-gray-300"
+            >
+              Products: {productCount.toLocaleString()}
+            </label>
+            <input
+              id={productRangeId}
+              type="range"
+              min="1000"
+              max="100000"
+              step="1000"
+              value={productCount}
+              onChange={(e) => setProductCount(Number(e.target.value))}
+              className="w-full"
+            />
+          </div>
+
+          <div>
+            <label htmlFor={robotRangeId} className="block mb-1 text-gray-300">
+              Robots: {robotCount}
+            </label>
+            <input
+              id={robotRangeId}
+              type="range"
+              min="1"
+              max="50"
+              value={robotCount}
+              onChange={(e) => setRobotCount(Number(e.target.value))}
+              className="w-full"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleReset}
+            className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-semibold py-2 px-4 rounded transition-colors"
           >
-            {shapes.map((shape) => (
-              <option
-                key={shape}
-                value={shape}
-                className="bg-slate-800 text-cyan-400"
-              >
-                {shape}
-              </option>
-            ))}
-          </select>
-        </h1>
+            Reset Positions
+          </button>
+        </div>
 
-        {shapeComponents[selectedWord]}
-      </section>
+        <div className="mt-3 pt-3 border-t border-gray-700 text-xs text-gray-400">
+          <p>Use mouse to pan, zoom, and rotate the view</p>
+        </div>
+      </div>
+
+      <StoreMapScene
+        key={key}
+        productCount={productCount}
+        robotCount={robotCount}
+      />
     </div>
   )
 }

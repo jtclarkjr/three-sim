@@ -14,10 +14,10 @@ interface Scene3DProps {
   showFloor?: boolean
 }
 
-export const Scene3D = ({ 
-  children, 
+export const Scene3D = ({
+  children,
   camera = { position: [0, 1, 6], fov: 50 },
-  className = "w-full h-[36rem] md:h-[50rem]",
+  className = 'w-full h-[36rem] md:h-[50rem]',
   useDragControls: enableDragControls = true,
   showFloor = true
 }: Scene3DProps) => {
@@ -29,23 +29,21 @@ export const Scene3D = ({
     handlePointerUp
   } = useDragControls()
 
-  const containerProps = enableDragControls ? {
-    onPointerDown: handlePointerDown,
-    onPointerMove: handlePointerMove,
-    onPointerUp: handlePointerUp,
-    onPointerLeave: handlePointerUp,
-    className: `${className} cursor-grab active:cursor-grabbing`
-  } : {
-    className
-  }
+  const containerProps = enableDragControls
+    ? {
+        onPointerDown: handlePointerDown,
+        onPointerMove: handlePointerMove,
+        onPointerUp: handlePointerUp,
+        onPointerLeave: handlePointerUp,
+        className: `${className} cursor-grab active:cursor-grabbing`
+      }
+    : {
+        className
+      }
 
   return (
     <div {...containerProps}>
-      <Canvas
-        camera={camera}
-        shadows
-        gl={{ antialias: true }}
-      >
+      <Canvas camera={camera} shadows gl={{ antialias: true }}>
         <ambientLight intensity={0.4} />
         <directionalLight
           position={[5, 8, 5]}

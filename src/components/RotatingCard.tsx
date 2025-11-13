@@ -33,7 +33,7 @@ const Card = ({ rotationDelta, isDragging }: CardProps) => {
 
   const handleDraggingRotation = () => {
     if (!meshRef.current) return
-    
+
     meshRef.current.rotation.y += rotationDelta.x * 0.015
     meshRef.current.rotation.x += rotationDelta.y * 0.015
 

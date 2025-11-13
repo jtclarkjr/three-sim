@@ -1,17 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
+import { GridFloor } from '@/components/grid/GridFloor'
+import { RotatingCard } from '@/components/RotatingCard'
 import { RotatingCone } from '@/components/RotatingCone'
 import { RotatingCube } from '@/components/RotatingCube'
 import { RotatingSphere } from '@/components/RotatingSphere'
 import { RotatingTorus } from '@/components/RotatingTorus'
-import { RotatingCard } from '@/components/RotatingCard'
-import { GridFloor } from '@/components/grid/GridFloor'
 
 export const Route = createFileRoute('/')({ component: App })
 
 type Shape = 'GRID' | 'CARD' | 'CUBE' | 'SPHERE' | 'TORUS' | 'CONE'
 
-const shapes: Shape[] = ['GRID', 'CARD', 'CUBE', 'SPHERE', 'TORUS', 'CONE', ]
+const shapes: Shape[] = ['GRID', 'CARD', 'CUBE', 'SPHERE', 'TORUS', 'CONE']
 
 const shapeComponents: Record<Shape, React.JSX.Element> = {
   CARD: <RotatingCard />,
@@ -19,7 +19,7 @@ const shapeComponents: Record<Shape, React.JSX.Element> = {
   SPHERE: <RotatingSphere />,
   TORUS: <RotatingTorus />,
   CONE: <RotatingCone />,
-  GRID: <GridFloor />,
+  GRID: <GridFloor />
 }
 
 function App() {
@@ -36,10 +36,13 @@ function App() {
             value={selectedWord}
             onChange={(e) => setSelectedWord(e.target.value as Shape)}
             className="appearance-none bg-transparent rounded-lg px-4 py-2 text-cyan-400 font-black text-6xl md:text-7xl cursor-pointer hover:border-cyan-400 transition-colors [letter-spacing:-0.08em] w-auto"
-
           >
             {shapes.map((shape) => (
-              <option key={shape} value={shape} className="bg-slate-800 text-cyan-400">
+              <option
+                key={shape}
+                value={shape}
+                className="bg-slate-800 text-cyan-400"
+              >
                 {shape}
               </option>
             ))}

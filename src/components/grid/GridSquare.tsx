@@ -1,7 +1,21 @@
 import { useState } from 'react'
-import type { GridSquareProps, ThreeMouseEvent, ThreePointerEvent } from './types'
+import type {
+  GridSquareProps,
+  ThreeMouseEvent,
+  ThreePointerEvent
+} from './types'
 
-export const GridSquare = ({ position, hasPiece, onClick, onPointerDown, onPointerUp, onPointerEnter, isDragTarget, isInvalidTarget, isDragging }: GridSquareProps) => {
+export const GridSquare = ({
+  position,
+  hasPiece,
+  onClick,
+  onPointerDown,
+  onPointerUp,
+  onPointerEnter,
+  isDragTarget,
+  isInvalidTarget,
+  isDragging
+}: GridSquareProps) => {
   const [hovered, setHovered] = useState(false)
 
   const getColor = () => {
@@ -13,6 +27,7 @@ export const GridSquare = ({ position, hasPiece, onClick, onPointerDown, onPoint
 
   return (
     <group>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: 3D mesh in React Three Fiber */}
       <mesh
         position={position}
         rotation={[-Math.PI / 2, 0, 0]}
@@ -47,14 +62,13 @@ export const GridSquare = ({ position, hasPiece, onClick, onPointerDown, onPoint
         }}
       >
         <planeGeometry args={[0.9, 0.9]} />
-        <meshStandardMaterial
-          color={getColor()}
-          opacity={0.8}
-          transparent
-        />
+        <meshStandardMaterial color={getColor()} opacity={0.8} transparent />
       </mesh>
       {hasPiece && !isDragging && (
-        <mesh position={[position[0], position[1] + 0.5, position[2]]} castShadow>
+        <mesh
+          position={[position[0], position[1] + 0.5, position[2]]}
+          castShadow
+        >
           <boxGeometry args={[0.7, 0.7, 0.7]} />
           <meshStandardMaterial color="#ff6b6b" />
         </mesh>

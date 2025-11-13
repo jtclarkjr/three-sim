@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react'
-import { DoubleSide } from 'three'
 import { OrbitControls } from '@react-three/drei'
-import { GridSquare } from './GridSquare'
+import { useRef, useState } from 'react'
+import { DoubleSide } from 'three'
+import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
 import { DraggedPiece } from './DraggedPiece'
+import { GridSquare } from './GridSquare'
 import type { GridPosition } from './types'
 
 export const GridScene = () => {
@@ -10,7 +11,7 @@ export const GridScene = () => {
   const [pieces, setPieces] = useState<Set<string>>(new Set())
   const [draggedFrom, setDraggedFrom] = useState<string | null>(null)
   const [hoverTarget, setHoverTarget] = useState<string | null>(null)
-  const orbitControlsRef = useRef<unknown>(null)
+  const orbitControlsRef = useRef<OrbitControlsType>(null)
 
   const togglePiece = (x: number, z: number) => {
     const key = `${x},${z}`
@@ -30,7 +31,7 @@ export const GridScene = () => {
     if (pieces.has(key)) {
       setDraggedFrom(key)
       if (orbitControlsRef.current) {
-        (orbitControlsRef.current as { enabled: boolean }).enabled = false
+        orbitControlsRef.current.enabled = false
       }
     }
   }
@@ -57,7 +58,7 @@ export const GridScene = () => {
     setDraggedFrom(null)
     setHoverTarget(null)
     if (orbitControlsRef.current) {
-      (orbitControlsRef.current as { enabled: boolean }).enabled = true
+      orbitControlsRef.current.enabled = true
     }
   }
 
@@ -83,10 +84,11 @@ export const GridScene = () => {
         const posX = x - gridSize / 2 + 0.5
         const posZ = z - gridSize / 2 + 0.5
         const key = `${x},${z}`
-        const isHoveringThisSquare = draggedFrom !== null && draggedFrom !== key && hoverTarget === key
+        const isHoveringThisSquare =
+          draggedFrom !== null && draggedFrom !== key && hoverTarget === key
         const isValidDrop = isHoveringThisSquare && !pieces.has(key)
         const isInvalidDrop = isHoveringThisSquare && pieces.has(key)
-        
+
         return (
           <GridSquare
             key={key}
@@ -107,7 +109,11 @@ export const GridScene = () => {
         <DraggedPiece gridSize={gridSize} />
       )}
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow position={[0, -0.01, 0]}>
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        receiveShadow
+        position={[0, -0.01, 0]}
+      >
         <planeGeometry args={[gridSize, gridSize]} />
         <meshStandardMaterial color="#1a1a1a" side={DoubleSide} />
       </mesh>

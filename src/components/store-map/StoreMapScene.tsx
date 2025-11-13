@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { generateProducts, generateRobots, STORE_BOUNDS } from './mockData'
 import { Products } from './Products'
 import { RobotMesh } from './RobotMesh'
-import { useRobotSimulation } from './useRobotSimulation'
+import { useRobotSimulation } from '@/hooks/useRobotSimulation'
 
 interface StoreMapSceneProps {
   productCount?: number

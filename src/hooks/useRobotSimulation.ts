@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { STORE_BOUNDS } from './mockData'
-import type { Product, Robot } from './types'
+import { STORE_BOUNDS } from '@/components/store-map/mockData'
+import type { Product, Robot } from '@/components/store-map/types'
 
 const UPDATE_INTERVAL = 100 // 10 times per second
 const STUCK_TIMEOUT = 3000 // If robot hasn't moved in 3 seconds, force reset

@@ -57,35 +57,6 @@ Preview the production build:
 bun serve
 ```
 
-## Project Structure
-
-```
-src/
-├── components/          # Three.js React components
-│   ├── RotatingCube.tsx
-│   ├── RotatingSphere.tsx
-│   ├── RotatingTorus.tsx
-│   └── RotatingCone.tsx
-├── routes/              # TanStack Router file-based routes
-│   ├── __root.tsx      # Root layout
-│   └── index.tsx       # Home page
-├── router.tsx          # Router configuration
-├── routeTree.gen.ts    # Generated route tree
-└── styles.css          # Global styles
-```
-
-## Available Scripts
-
-```bash
-bun dev          # Start development server
-bun build        # Build for production
-bun serve        # Preview production build
-bun test         # Run tests
-bun lint         # Lint code
-bun format       # Format code
-bun check        # Run Biome checks (lint + format)
-```
-
 ## License
 
 MIT

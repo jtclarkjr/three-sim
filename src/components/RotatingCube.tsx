@@ -14,7 +14,7 @@ const Cube = ({ rotationDelta, isDragging }: CubeProps) => {
     <group ref={meshRef} position={[0, 0.5, 0]}>
       <RoundedBox args={[2, 2, 2]} radius={0.15} smoothness={4} castShadow>
         <meshPhysicalMaterial
-          color="#e8f4ff"
+          color="black"
           transparent
           opacity={0.25}
           roughness={0.05}

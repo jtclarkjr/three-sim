@@ -7,6 +7,7 @@ export const GridFloor = () => {
       camera={{ position: [8, 8, 8], fov: 50 }}
       useDragControls={false}
       showFloor={false}
+      environment="city"
     >
       {() => <GridScene />}
     </Scene3D>

@@ -14,6 +14,17 @@ interface Scene3DProps {
   className?: string
   useDragControls?: boolean
   showFloor?: boolean
+  environment?:
+    | 'city'
+    | 'apartment'
+    | 'dawn'
+    | 'forest'
+    | 'lobby'
+    | 'night'
+    | 'park'
+    | 'studio'
+    | 'sunset'
+    | 'warehouse'
 }
 
 export const Scene3D = ({
@@ -21,7 +32,8 @@ export const Scene3D = ({
   camera = { position: [0, 1, 6], fov: 50 },
   className = 'w-full h-[36rem] md:h-[50rem]',
   useDragControls: enableDragControls = true,
-  showFloor = true
+  showFloor = true,
+  environment = 'sunset'
 }: Scene3DProps) => {
   const {
     isDragging,
@@ -60,7 +72,7 @@ export const Scene3D = ({
           shadow-camera-bottom={-10}
         />
         <Suspense fallback={null}>
-          <Environment preset="city" />
+          <Environment preset={environment} />
         </Suspense>
         {children({ isDragging, rotationDelta })}
         {showFloor && <Floor />}

@@ -134,8 +134,9 @@ export function useRobotSimulation(
       setRobots((currentRobots) => {
         return currentRobots.map((robot) => {
           const currentTime = Date.now()
-          const timeSinceLastMove = currentTime - (robot.lastMoveTime ?? currentTime)
-          
+          const timeSinceLastMove =
+            currentTime - (robot.lastMoveTime ?? currentTime)
+
           // Force reset if robot hasn't moved in STUCK_TIMEOUT milliseconds
           if (timeSinceLastMove > STUCK_TIMEOUT) {
             const newDest = getValidDestination()
@@ -146,7 +147,7 @@ export function useRobotSimulation(
               lastMoveTime: currentTime
             }
           }
-          
+
           const dx = robot.destX - robot.x
           const dy = robot.destY - robot.y
           const distance = Math.sqrt(dx * dx + dy * dy)
@@ -243,7 +244,7 @@ export function useRobotSimulation(
               -STORE_BOUNDS.height / 2 + 10,
               Math.min(STORE_BOUNDS.height / 2 - 10, newDestY)
             )
-            
+
             // If bounced destination isn't in a walkway, find a valid one
             if (!isInAisleWalkway(newDestX, newDestY)) {
               const validDest = getValidDestination()
@@ -269,10 +270,13 @@ export function useRobotSimulation(
           }
 
           const newOrientation = Math.atan2(newX - robot.x, newY - robot.y)
-          
+
           // Check if robot actually moved
-          const hasMoved = Math.abs(newX - robot.x) > 0.01 || Math.abs(newY - robot.y) > 0.01
-          const lastMoveTime = hasMoved ? Date.now() : (robot.lastMoveTime ?? Date.now())
+          const hasMoved =
+            Math.abs(newX - robot.x) > 0.01 || Math.abs(newY - robot.y) > 0.01
+          const lastMoveTime = hasMoved
+            ? Date.now()
+            : (robot.lastMoveTime ?? Date.now())
 
           return {
             ...robot,

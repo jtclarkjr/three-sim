@@ -59,7 +59,7 @@ export const RobotMesh = ({ robot, showLabel = false }: RobotMeshProps) => {
         <meshStandardMaterial color="#00a8cc" />
       </mesh>
 
-      {showLabel && (
+      {showLabel &&
         // <Text
         //   position={[0, 4, 0]}
         //   fontSize={0.8}
@@ -71,8 +71,7 @@ export const RobotMesh = ({ robot, showLabel = false }: RobotMeshProps) => {
         // >
         //   {robot.name}
         // </Text>
-        null
-      )}
+        null}
     </group>
   )
 }

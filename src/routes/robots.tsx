@@ -19,12 +19,12 @@ function RobotsMap() {
     <div className="relative w-full h-screen bg-slate-900">
       <Link
         to="/"
-        className="absolute top-4 right-4 z-10 bg-slate-800/90 backdrop-blur-sm p-3 rounded-lg shadow-lg text-cyan-400 hover:text-cyan-300 hover:bg-slate-700/90 transition-colors font-semibold"
+        className="absolute top-4 left-4 z-10 bg-slate-800/90 backdrop-blur-sm p-3 rounded-lg shadow-lg text-cyan-400 hover:text-cyan-300 hover:bg-slate-700/90 transition-colors font-semibold"
       >
         Home
       </Link>
 
-      <div className="absolute top-4 left-4 z-10 bg-slate-800/90 backdrop-blur-sm p-4 rounded-lg shadow-lg text-white">
+      <div className="absolute top-4 right-4 z-10 bg-slate-800/90 backdrop-blur-sm p-4 rounded-lg shadow-lg text-white">
         <h2 className="text-xl font-bold mb-3 text-cyan-400">
           Robots in store simulation
         </h2>

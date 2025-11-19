@@ -29,7 +29,7 @@ function App() {
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
       <Link
         to="/"
-        className="absolute top-6 right-6 z-10 bg-slate-800/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg text-cyan-400 hover:text-cyan-300 hover:bg-slate-700/90 transition-colors font-semibold"
+        className="absolute top-6 left-6 z-10 bg-slate-800/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg text-cyan-400 hover:text-cyan-300 hover:bg-slate-700/90 transition-colors font-semibold"
       >
         Home
       </Link>

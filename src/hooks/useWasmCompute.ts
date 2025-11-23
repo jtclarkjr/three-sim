@@ -46,6 +46,7 @@ export function useWasmCompute() {
     error,
     computeMagnitudes,
     computeDotProducts,
-    computeLerpVectors
+    computeLerpVectors,
+    updateRobots: module?.updateRobots
   }
 }

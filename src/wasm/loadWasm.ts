@@ -6,6 +6,12 @@ export type WasmApi = {
     b: Float32Array,
     t: number
   ) => Float32Array | number[]
+  updateRobots?: (
+    robots: Float32Array,
+    products: Float32Array,
+    bounds: Float32Array,
+    deltaMs: number
+  ) => Float32Array | number[]
 }
 
 let wasmModulePromise: Promise<WasmApi> | null = null
@@ -19,6 +25,7 @@ export async function loadWasm(): Promise<WasmApi> {
           magnitudes: WasmApi['magnitudes']
           dot_products: WasmApi['dotProducts']
           lerp_vectors: WasmApi['lerpVectors']
+          update_robots?: WasmApi['updateRobots']
         }
 
         if (typeof wasmMod.default === 'function') {
@@ -28,7 +35,8 @@ export async function loadWasm(): Promise<WasmApi> {
         return {
           magnitudes: wasmMod.magnitudes,
           dotProducts: wasmMod.dot_products,
-          lerpVectors: wasmMod.lerp_vectors
+          lerpVectors: wasmMod.lerp_vectors,
+          updateRobots: wasmMod.update_robots
         }
       })
       .catch(async () => {
@@ -38,6 +46,7 @@ export async function loadWasm(): Promise<WasmApi> {
           magnitudes: WasmApi['magnitudes']
           dotProducts: WasmApi['dotProducts']
           lerpVectors: WasmApi['lerpVectors']
+          updateRobots?: WasmApi['updateRobots']
         }
 
         if (typeof stub.default === 'function') {
@@ -47,7 +56,8 @@ export async function loadWasm(): Promise<WasmApi> {
         return {
           magnitudes: stub.magnitudes,
           dotProducts: stub.dotProducts,
-          lerpVectors: stub.lerpVectors
+          lerpVectors: stub.lerpVectors,
+          updateRobots: stub.updateRobots
         }
       })
   }

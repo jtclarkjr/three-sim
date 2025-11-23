@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { STORE_BOUNDS } from '@/components/store-map/mockData'
 import type { Product, Robot } from '@/components/store-map/types'
 
-const UPDATE_INTERVAL = 100 // 10 times per second
+const UPDATE_INTERVAL = 50 // 20 times per second for smoother motion
 const STUCK_TIMEOUT = 3000 // If robot hasn't moved in 3 seconds, force reset
+const ORIENTATION_SMOOTHING = 0.25
 
 // Aisle configuration matching mockData.ts
 const NUM_AISLES = 6 // Fewer aisles to fit in store
@@ -116,6 +117,11 @@ function checkProductCollision(
     }
   }
   return null
+}
+
+function shortestAngleDiff(target: number, current: number) {
+  const diff = ((target - current + Math.PI) % (Math.PI * 2)) - Math.PI
+  return diff < -Math.PI ? diff + Math.PI * 2 : diff
 }
 
 export function useRobotSimulation(
@@ -269,7 +275,12 @@ export function useRobotSimulation(
             }
           }
 
-          const newOrientation = Math.atan2(newX - robot.x, newY - robot.y)
+          const targetOrientation = Math.atan2(newX - robot.x, newY - robot.y)
+          const orientationDiff = shortestAngleDiff(
+            targetOrientation,
+            robot.orientation
+          )
+          const newOrientation = robot.orientation + orientationDiff * ORIENTATION_SMOOTHING
 
           // Check if robot actually moved
           const hasMoved =

@@ -280,7 +280,8 @@ export function useRobotSimulation(
             targetOrientation,
             robot.orientation
           )
-          const newOrientation = robot.orientation + orientationDiff * ORIENTATION_SMOOTHING
+          const newOrientation =
+            robot.orientation + orientationDiff * ORIENTATION_SMOOTHING
 
           // Check if robot actually moved
           const hasMoved =

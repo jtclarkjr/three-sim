@@ -60,6 +60,42 @@ Preview the production build:
 bun serve
 ```
 
+## Rust + WebAssembly compute
+
+Heavy computations can run in Rust and be consumed in React via WebAssembly.
+
+### Build the Wasm module
+
+From `wasm/`:
+
+```bash
+cargo install wasm-pack # once, if not installed
+cd wasm && wasm-pack build --target web --out-dir ../src/wasm/pkg
+```
+
+This generates `three_sim_wasm_bg.wasm` plus JS/TS bindings in `src/wasm/pkg`, replacing the stub files.
+
+### Use in React
+
+Load the module with the provided hook:
+
+```ts
+import { useWasmCompute } from '@/hooks/useWasmCompute'
+
+const { ready, computeMagnitudes, computeDotProducts, computeLerpVectors } =
+  useWasmCompute()
+// wait for ready before calling
+```
+
+APIs:
+- `computeMagnitudes(buffer)` — lengths of packed XYZ vectors.
+- `computeDotProducts(a, b)` — per-vector dot product for two packed XYZ buffers.
+- `computeLerpVectors(a, b, t)` — linear interpolation of two packed XYZ buffers.
+
+Notes:
+- If the generated Wasm module is missing, the app falls back to the JS stub in `src/wasm/pkg`, so UI stays up; rebuild with `wasm-pack` to restore Rust implementations.
+- Expose new Rust functions with `#[wasm_bindgen]` and rebuild with `wasm-pack`.
+
 ## License
 
 MIT

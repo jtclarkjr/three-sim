@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { StoreMapScene } from '@/components/store-map/StoreMapScene'
+import { useWasmCompute } from '@/hooks/useWasmCompute'
 
 export const Route = createFileRoute('/robots')({ component: RobotsMap })
 
@@ -8,8 +9,17 @@ function RobotsMap() {
   const [productCount, setProductCount] = useState(20000)
   const [robotCount, setRobotCount] = useState(30)
   const [key, setKey] = useState(0)
+  const [sampleMagnitude, setSampleMagnitude] = useState<string | null>(null)
   const productRangeId = useId()
   const robotRangeId = useId()
+  const { ready: wasmReady, computeMagnitudes } = useWasmCompute()
+
+  useEffect(() => {
+    if (!wasmReady || !computeMagnitudes) return
+    const demo = new Float32Array([3, 4, 0]) // length should be 5
+    const result = computeMagnitudes(demo)
+    setSampleMagnitude(result[0]?.toFixed(2) ?? null)
+  }, [computeMagnitudes, wasmReady])
 
   const handleReset = () => {
     setKey((prev) => prev + 1)
@@ -71,6 +81,19 @@ function RobotsMap() {
           >
             Reset Positions
           </button>
+        </div>
+
+        <div className="mt-4 pt-3 border-t border-gray-700 text-xs text-gray-300 space-y-1">
+          <div className="flex items-center justify-between">
+            <span>Rust/Wasm compute:</span>
+            <span className="font-semibold">
+              {wasmReady ? 'Ready' : 'Loading...'}
+            </span>
+          </div>
+          <div className="text-gray-400">
+            Magnitude (3,4,0):{' '}
+            <span className="text-cyan-300">{sampleMagnitude ?? '—'}</span>
+          </div>
         </div>
 
         <div className="mt-3 pt-3 border-t border-gray-700 text-xs text-gray-400">

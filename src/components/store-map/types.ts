@@ -7,6 +7,7 @@ export interface Product {
 export interface Robot {
   id: string
   name: string
+  variant: 'walking' | 'tracked' | 'dome'
   x: number
   y: number
   orientation: number // in radians

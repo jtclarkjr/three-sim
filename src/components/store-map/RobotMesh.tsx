@@ -1,6 +1,10 @@
+import { Html } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { useRef } from 'react'
-import type { Mesh } from 'three'
+import { useMemo, useRef } from 'react'
+import type { Group } from 'three'
+import { DomeRobotMesh } from './DomeRobotMesh'
+import { TrackedRobotMesh } from './TrackedRobotMesh'
+import { WalkingRobotMesh } from './WalkingRobotMesh'
 import type { Robot } from './types'
 
 interface RobotMeshProps {
@@ -9,69 +13,46 @@ interface RobotMeshProps {
 }
 
 export const RobotMesh = ({ robot, showLabel = false }: RobotMeshProps) => {
-  const meshRef = useRef<Mesh>(null)
-  const bodyRef = useRef<Mesh>(null)
+  const groupRef = useRef<Group>(null)
 
   useFrame(() => {
-    if (!meshRef.current) return
+    if (!groupRef.current) return
 
-    meshRef.current.position.x = robot.x
-    meshRef.current.position.z = robot.y
-    meshRef.current.rotation.y = robot.orientation
+    groupRef.current.position.x = robot.x
+    groupRef.current.position.z = robot.y
+    groupRef.current.rotation.y = robot.orientation
   })
 
+  const VariantMesh = useMemo(() => {
+    switch (robot.variant) {
+      case 'walking':
+        return WalkingRobotMesh
+      case 'tracked':
+        return TrackedRobotMesh
+      default:
+        return DomeRobotMesh
+    }
+  }, [robot.variant])
+
   return (
-    <group ref={meshRef}>
-      <mesh position={[0, 1, 0]} ref={bodyRef}>
-        <cylinderGeometry args={[1.5, 1.5, 2, 16]} />
-        <meshStandardMaterial
-          color="#00d4ff"
-          emissive="#00d4ff"
-          emissiveIntensity={0.3}
-        />
-      </mesh>
-
-      <mesh position={[0, 2.5, 0]}>
-        <sphereGeometry args={[0.8, 16, 16]} />
-        <meshStandardMaterial
-          color="#ffffff"
-          emissive="#00d4ff"
-          emissiveIntensity={0.2}
-        />
-      </mesh>
-
-      <mesh position={[0, 2.5, 0.6]}>
-        <sphereGeometry args={[0.3, 8, 8]} />
-        <meshStandardMaterial
-          color="#000000"
-          emissive="#00ff00"
-          emissiveIntensity={0.8}
-        />
-      </mesh>
-
-      <mesh position={[1.2, 0.5, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.3, 0.3, 1, 8]} />
-        <meshStandardMaterial color="#00a8cc" />
-      </mesh>
-
-      <mesh position={[-1.2, 0.5, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.3, 0.3, 1, 8]} />
-        <meshStandardMaterial color="#00a8cc" />
-      </mesh>
-
-      {showLabel &&
-        // <Text
-        //   position={[0, 4, 0]}
-        //   fontSize={0.8}
-        //   color="#00d4ff"
-        //   anchorX="center"
-        //   anchorY="middle"
-        //   outlineWidth={0.02}
-        //   outlineColor="#000000"
-        // >
-        //   {robot.name}
-        // </Text>
-        null}
+    <group ref={groupRef}>
+      <VariantMesh />
+      {showLabel && (
+        <Html
+          position={[0, 3.2, 0]}
+          center
+          style={{
+            color: '#a5f3fc',
+            fontSize: '12px',
+            fontWeight: 600,
+            background: 'rgba(15,23,42,0.65)',
+            padding: '2px 6px',
+            borderRadius: '6px'
+          }}
+        >
+          {robot.name}
+        </Html>
+      )}
     </group>
   )
 }

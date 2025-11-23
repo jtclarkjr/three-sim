@@ -78,6 +78,7 @@ export const generateRobots = (count: number): Robot[] => {
   // Robots start in wide cross-aisles between shelf pairs
   const numAisles = 9
   const aisleSpacing = 30
+  const variants: Robot['variant'][] = ['walking', 'tracked', 'dome']
 
   for (let i = 0; i < count; i++) {
     // Start robots at top or bottom edge
@@ -101,6 +102,7 @@ export const generateRobots = (count: number): Robot[] => {
     robots.push({
       id: `robot-${i}`,
       name: `${robotNames[i % robotNames.length]}-${Math.floor(i / robotNames.length) + 1}`,
+      variant: variants[i % variants.length],
       x,
       y,
       orientation: Math.random() * Math.PI * 2,

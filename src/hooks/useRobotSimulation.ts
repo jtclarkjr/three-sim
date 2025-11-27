@@ -103,5 +103,9 @@ export function useRobotSimulation(
     return () => clearInterval(intervalId)
   }, [products, wasmModule])
 
+  useEffect(() => {
+    setRobots(initialRobots)
+  }, [initialRobots])
+
   return robots
 }

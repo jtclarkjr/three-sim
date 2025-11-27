@@ -4,20 +4,29 @@ import { useMemo } from 'react'
 import { generateProducts, generateRobots, STORE_BOUNDS } from './mockData'
 import { Products } from './Products'
 import { RobotMesh } from './RobotMesh'
+import type { Robot } from './types'
 import { useRobotSimulation } from '@/hooks/useRobotSimulation'
 
 interface StoreMapSceneProps {
   productCount?: number
   robotCount?: number
+  initialRobots?: Robot[]
+  trackedRobotId?: string | null
 }
 
 export const StoreMapScene = ({
   productCount = 100000,
-  robotCount = 50
+  robotCount = 50,
+  initialRobots,
+  trackedRobotId
 }: StoreMapSceneProps) => {
   const products = useMemo(() => generateProducts(productCount), [productCount])
-  const initialRobots = useMemo(() => generateRobots(robotCount), [robotCount])
-  const robots = useRobotSimulation(initialRobots, products)
+  const robotsToSimulate = useMemo(
+    () => initialRobots ?? generateRobots(robotCount),
+    [initialRobots, robotCount]
+  )
+  const robots = useRobotSimulation(robotsToSimulate, products)
+  const shouldShowLabel = robotCount <= 20
 
   return (
     <div className="w-full h-screen">
@@ -76,7 +85,8 @@ export const StoreMapScene = ({
           <RobotMesh
             key={robot.id}
             robot={robot}
-            showLabel={robotCount <= 20}
+            showLabel={shouldShowLabel}
+            isTracked={trackedRobotId === robot.id}
           />
         ))}
 

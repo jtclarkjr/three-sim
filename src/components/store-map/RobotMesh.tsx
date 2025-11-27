@@ -10,9 +10,14 @@ import type { Robot } from './types'
 interface RobotMeshProps {
   robot: Robot
   showLabel?: boolean
+  isTracked?: boolean
 }
 
-export const RobotMesh = ({ robot, showLabel = false }: RobotMeshProps) => {
+export const RobotMesh = ({
+  robot,
+  showLabel = false,
+  isTracked = false
+}: RobotMeshProps) => {
   const groupRef = useRef<Group>(null)
 
   useFrame(() => {
@@ -34,23 +39,46 @@ export const RobotMesh = ({ robot, showLabel = false }: RobotMeshProps) => {
     }
   }, [robot.variant])
 
+  const shouldShowLabel = showLabel || isTracked
+
   return (
     <group ref={groupRef}>
+      {isTracked && (
+        <>
+          <mesh position={[0, 0.12, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={1.6}>
+            <ringGeometry args={[0.9, 1.35, 36]} />
+            <meshBasicMaterial color="#22d3ee" transparent opacity={0.55} />
+          </mesh>
+          <mesh position={[0, 0.11, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <circleGeometry args={[1, 32]} />
+            <meshBasicMaterial color="#0ea5e9" transparent opacity={0.15} />
+          </mesh>
+          <pointLight color="#67e8f9" intensity={1.8} distance={10} />
+        </>
+      )}
+
       <VariantMesh />
-      {showLabel && (
+      {shouldShowLabel && (
         <Html
           position={[0, 3.2, 0]}
           center
           style={{
-            color: '#a5f3fc',
+            color: '#e0f2fe',
             fontSize: '12px',
-            fontWeight: 600,
-            background: 'rgba(15,23,42,0.65)',
-            padding: '2px 6px',
-            borderRadius: '6px'
+            fontWeight: 700,
+            background: isTracked
+              ? 'rgba(8,47,73,0.85)'
+              : 'rgba(15,23,42,0.65)',
+            padding: '3px 8px',
+            borderRadius: '10px',
+            border: isTracked ? '1px solid #22d3ee' : '1px solid transparent',
+            boxShadow: isTracked
+              ? '0 0 0 1px rgba(34,211,238,0.35), 0 10px 25px rgba(34,211,238,0.18)'
+              : 'none',
+            letterSpacing: '0.01em'
           }}
         >
-          {robot.name}
+          {isTracked ? `Tracking ${robot.name}` : robot.name}
         </Html>
       )}
     </group>

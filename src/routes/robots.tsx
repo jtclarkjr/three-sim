@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useId, useState } from 'react'
+import { generateRobots } from '@/components/store-map/mockData'
 import { StoreMapScene } from '@/components/store-map/StoreMapScene'
 import { useWasmCompute } from '@/hooks/useWasmCompute'
 
@@ -8,10 +9,15 @@ export const Route = createFileRoute('/robots')({ component: RobotsMap })
 function RobotsMap() {
   const [productCount, setProductCount] = useState(20000)
   const [robotCount, setRobotCount] = useState(30)
-  const [key, setKey] = useState(0)
+  const [sceneSeed, setSceneSeed] = useState(0)
+  const [trackedRobotId, setTrackedRobotId] = useState<string | null>(null)
   const [sampleMagnitude, setSampleMagnitude] = useState<string | null>(null)
+  const [initialRobots, setInitialRobots] = useState(() =>
+    generateRobots(robotCount)
+  )
   const productRangeId = useId()
   const robotRangeId = useId()
+  const trackSelectId = useId()
   const { ready: wasmReady, computeMagnitudes } = useWasmCompute()
 
   useEffect(() => {
@@ -21,8 +27,28 @@ function RobotsMap() {
     setSampleMagnitude(result[0]?.toFixed(2) ?? null)
   }, [computeMagnitudes, wasmReady])
 
+  useEffect(() => {
+    // Re-roll robots when sceneSeed changes, even if the count stays the same
+    void sceneSeed
+    setInitialRobots(generateRobots(robotCount))
+  }, [robotCount, sceneSeed])
+
+  useEffect(() => {
+    if (!initialRobots.length) {
+      setTrackedRobotId(null)
+      return
+    }
+
+    setTrackedRobotId((current) => {
+      if (current && initialRobots.some((robot) => robot.id === current)) {
+        return current
+      }
+      return initialRobots[0]?.id ?? null
+    })
+  }, [initialRobots])
+
   const handleReset = () => {
-    setKey((prev) => prev + 1)
+    setSceneSeed((prev) => prev + 1)
   }
 
   return (
@@ -74,6 +100,31 @@ function RobotsMap() {
             />
           </div>
 
+          <div>
+            <label htmlFor={trackSelectId} className="block mb-1 text-gray-300">
+              Track robot
+            </label>
+            <select
+              id={trackSelectId}
+              value={trackedRobotId ?? ''}
+              onChange={(event) => {
+                const selected = event.target.value
+                setTrackedRobotId(selected || null)
+              }}
+              className="w-full bg-slate-900/60 border border-slate-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            >
+              <option value="">— None —</option>
+              {initialRobots.map((robot) => (
+                <option key={robot.id} value={robot.id}>
+                  {robot.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-400 mt-1">
+              Tracked robots are highlighted and labeled even in crowded scenes.
+            </p>
+          </div>
+
           <button
             type="button"
             onClick={handleReset}
@@ -102,9 +153,11 @@ function RobotsMap() {
       </div>
 
       <StoreMapScene
-        key={key}
+        key={sceneSeed}
         productCount={productCount}
         robotCount={robotCount}
+        initialRobots={initialRobots}
+        trackedRobotId={trackedRobotId}
       />
     </div>
   )

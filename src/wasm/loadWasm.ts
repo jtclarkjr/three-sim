@@ -6,12 +6,20 @@ export type WasmApi = {
     b: Float32Array,
     t: number
   ) => Float32Array | number[]
-  updateRobots?: (
+  computePath: (
+    start: Float32Array,
+    end: Float32Array,
+    bounds: Float32Array,
+    preferOuterWalkway: boolean
+  ) => Float32Array | number[]
+  updateRobots: (
     robots: Float32Array,
     products: Float32Array,
     bounds: Float32Array,
     deltaMs: number
   ) => Float32Array | number[]
+  moveRobotToWaypoint: (robotData: Float32Array) => Float32Array | number[]
+  hasArrivedAtWaypoint: (positions: Float32Array) => number
 }
 
 let wasmModulePromise: Promise<WasmApi> | null = null
@@ -25,7 +33,10 @@ export async function loadWasm(): Promise<WasmApi> {
           magnitudes: WasmApi['magnitudes']
           dot_products: WasmApi['dotProducts']
           lerp_vectors: WasmApi['lerpVectors']
-          update_robots?: WasmApi['updateRobots']
+          compute_path: WasmApi['computePath']
+          update_robots: WasmApi['updateRobots']
+          move_robot_to_waypoint: WasmApi['moveRobotToWaypoint']
+          has_arrived_at_waypoint: WasmApi['hasArrivedAtWaypoint']
         }
 
         if (typeof wasmMod.default === 'function') {
@@ -36,7 +47,10 @@ export async function loadWasm(): Promise<WasmApi> {
           magnitudes: wasmMod.magnitudes,
           dotProducts: wasmMod.dot_products,
           lerpVectors: wasmMod.lerp_vectors,
-          updateRobots: wasmMod.update_robots
+          computePath: wasmMod.compute_path,
+          updateRobots: wasmMod.update_robots,
+          moveRobotToWaypoint: wasmMod.move_robot_to_waypoint,
+          hasArrivedAtWaypoint: wasmMod.has_arrived_at_waypoint
         }
       })
       .catch(async () => {
@@ -46,7 +60,10 @@ export async function loadWasm(): Promise<WasmApi> {
           magnitudes: WasmApi['magnitudes']
           dotProducts: WasmApi['dotProducts']
           lerpVectors: WasmApi['lerpVectors']
-          updateRobots?: WasmApi['updateRobots']
+          computePath: WasmApi['computePath']
+          updateRobots: WasmApi['updateRobots']
+          moveRobotToWaypoint: WasmApi['moveRobotToWaypoint']
+          hasArrivedAtWaypoint: WasmApi['hasArrivedAtWaypoint']
         }
 
         if (typeof stub.default === 'function') {
@@ -57,7 +74,10 @@ export async function loadWasm(): Promise<WasmApi> {
           magnitudes: stub.magnitudes,
           dotProducts: stub.dotProducts,
           lerpVectors: stub.lerpVectors,
-          updateRobots: stub.updateRobots
+          computePath: stub.computePath,
+          updateRobots: stub.updateRobots,
+          moveRobotToWaypoint: stub.moveRobotToWaypoint,
+          hasArrivedAtWaypoint: stub.hasArrivedAtWaypoint
         }
       })
   }

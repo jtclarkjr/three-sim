@@ -7,15 +7,14 @@ export const generateProducts = (count: number): Product[] => {
   const products: Product[] = []
 
   // storefloor-style layout: multiple aisles with shelving units
-  const numAisles = 6 // Fewer aisles to fit wider spacing
+  const numAisles = AISLE_CONFIG.count // Fewer aisles to fit wider spacing
   const aisleWidth = 6 // Width of narrow shelf aisle
-  const aisleSpacing = 40 // Spacing between shelf centers
   const productsPerAisle = Math.floor(count / (numAisles * 2))
 
   let productId = 0
 
   for (let aisle = 0; aisle < numAisles; aisle++) {
-    const aisleX = -STORE_WIDTH / 2 + 20 + aisle * aisleSpacing
+    const aisleX = getAisleCenterX(aisle)
 
     // Left side shelves
     for (let i = 0; i < productsPerAisle; i++) {
@@ -119,3 +118,12 @@ export const STORE_BOUNDS = {
   width: STORE_WIDTH,
   height: STORE_HEIGHT
 }
+
+export const AISLE_CONFIG = {
+  count: 6,
+  spacing: 40,
+  startX: -STORE_WIDTH / 2 + 20
+}
+
+export const getAisleCenterX = (aisleIndex: number) =>
+  AISLE_CONFIG.startX + aisleIndex * AISLE_CONFIG.spacing

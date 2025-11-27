@@ -1,0 +1,14 @@
+pub const UPDATE_INTERVAL_DEFAULT: f32 = 50.0;
+pub const STUCK_TIMEOUT: f32 = 3000.0;
+pub const ROBOT_RADIUS: f32 = 2.0;
+pub const PRODUCT_RADIUS: f32 = 0.5;
+pub const COLLISION_BUFFER: f32 = 0.5;
+pub const NUM_AISLES: i32 = 6;
+pub const AISLE_SPACING: f32 = 30.0;
+pub const AISLE_WIDTH: f32 = 6.0;
+pub const WALKWAY_WIDTH: f32 = 10.0;
+pub const TOP_BOTTOM_OFFSET: f32 = 10.0;
+pub const NAV_CELL_SIZE: f32 = 5.0;
+pub const OUTER_WALKWAY_OFFSET: f32 = 12.0;
+pub const ARRIVAL_DISTANCE: f32 = 2.5;
+pub const ARRIVAL_DISTANCE_SQUARED: f32 = ARRIVAL_DISTANCE * ARRIVAL_DISTANCE;

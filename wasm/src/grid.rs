@@ -1,0 +1,70 @@
+use crate::constants::*;
+use crate::geometry::clamp;
+
+pub fn world_to_col(x: f32, width: f32) -> i32 {
+    let col = ((x + width / 2.0) / NAV_CELL_SIZE).floor() as i32;
+    col
+}
+
+pub fn world_to_row(y: f32, height: f32) -> i32 {
+    let row = ((y + height / 2.0) / NAV_CELL_SIZE).floor() as i32;
+    row
+}
+
+pub fn cell_center_x(col: i32, width: f32) -> f32 {
+    col as f32 * NAV_CELL_SIZE - width / 2.0 + NAV_CELL_SIZE / 2.0
+}
+
+pub fn cell_center_y(row: i32, height: f32) -> f32 {
+    row as f32 * NAV_CELL_SIZE - height / 2.0 + NAV_CELL_SIZE / 2.0
+}
+
+pub fn build_nav_grid(width: f32, height: f32) -> Vec<Vec<bool>> {
+    let cols = (width / NAV_CELL_SIZE).ceil() as i32;
+    let rows = (height / NAV_CELL_SIZE).ceil() as i32;
+    let mut grid = vec![vec![true; cols as usize]; rows as usize];
+
+    let half_shelf = AISLE_WIDTH / 2.0 + 1.5;
+    for aisle in 0..NUM_AISLES {
+        let center_x = -width / 2.0 + 20.0 + (aisle as f32) * AISLE_SPACING;
+        let min_x = center_x - half_shelf;
+        let max_x = center_x + half_shelf;
+        let min_col = clamp(world_to_col(min_x, width) as f32, 0.0, cols as f32 - 1.0) as i32;
+        let max_col = clamp(world_to_col(max_x, width) as f32, 0.0, cols as f32 - 1.0) as i32;
+        for col in min_col..=max_col {
+            for row in 0..rows {
+                grid[row as usize][col as usize] = false;
+            }
+        }
+    }
+
+    grid
+}
+
+pub fn is_in_aisle_walkway(x: f32, y: f32, width: f32, height: f32) -> bool {
+    let top_walkway_y = height / 2.0 - TOP_BOTTOM_OFFSET;
+    let bottom_walkway_y = -height / 2.0 + TOP_BOTTOM_OFFSET;
+
+    for aisle in 0..(NUM_AISLES - 1) {
+        let aisle_x = -width / 2.0 + 20.0 + (aisle as f32) * AISLE_SPACING;
+        let next_aisle_x = -width / 2.0 + 20.0 + (aisle as f32 + 1.0) * AISLE_SPACING;
+        let mid_x = (aisle_x + next_aisle_x) / 2.0;
+        let cross_aisle_width = AISLE_SPACING - AISLE_WIDTH - 4.0;
+
+        if (x - mid_x).abs() < cross_aisle_width / 2.0 {
+            let y_in_bounds = y.abs() < height / 2.0 - 5.0;
+            if y_in_bounds {
+                return true;
+            }
+        }
+    }
+
+    if ((y - top_walkway_y).abs() < WALKWAY_WIDTH / 2.0
+        || (y - bottom_walkway_y).abs() < WALKWAY_WIDTH / 2.0)
+        && x.abs() < width / 2.0 - 10.0
+    {
+        return true;
+    }
+
+    false
+}

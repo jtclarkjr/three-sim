@@ -23,6 +23,7 @@ export const RobotMesh = ({
   // Reuse vectors to avoid allocations in the render loop
   const worldPosition = useRef(new Vector3()).current
   const [isNearCamera, setIsNearCamera] = useState(false)
+  const isCarrying = Boolean(robot.carryingProductId)
 
   useFrame(({ camera }) => {
     if (!groupRef.current) return
@@ -57,19 +58,34 @@ export const RobotMesh = ({
     <group ref={groupRef}>
       {isTracked && (
         <>
-          <mesh position={[0, 0.12, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={1.6}>
+          <mesh
+            position={[0, 0.12, 0]}
+            rotation={[-Math.PI / 2, 0, 0]}
+            scale={1.6}
+          >
             <ringGeometry args={[0.9, 1.35, 36]} />
             <meshBasicMaterial color="#22d3ee" transparent opacity={0.55} />
           </mesh>
           <mesh position={[0, 0.11, 0]} rotation={[-Math.PI / 2, 0, 0]}>
             <circleGeometry args={[1, 32]} />
-          <meshBasicMaterial color="#0ea5e9" transparent opacity={0.15} />
+            <meshBasicMaterial color="#0ea5e9" transparent opacity={0.15} />
           </mesh>
           <pointLight color="#67e8f9" intensity={1.8} distance={10} />
         </>
       )}
 
       <VariantMesh />
+      {isCarrying && (
+        <mesh position={[0, 2.9, 0]} castShadow>
+          <boxGeometry args={[0.8, 0.35, 0.8]} />
+          <meshStandardMaterial
+            color="#f59e0b"
+            emissive="#fb923c"
+            emissiveIntensity={0.35}
+            roughness={0.4}
+          />
+        </mesh>
+      )}
       {shouldShowIndicator && (
         <mesh position={[0, 3.3, 0]}>
           <sphereGeometry args={[0.24, 16, 16]} />
@@ -101,7 +117,14 @@ export const RobotMesh = ({
             letterSpacing: '0.01em'
           }}
         >
-          {isTracked ? `Tracking ${robot.name}` : robot.name}
+          <div>
+            <div>{isTracked ? `Tracking ${robot.name}` : robot.name}</div>
+            {isCarrying && (
+              <div style={{ marginTop: 2, color: '#facc15', fontWeight: 600 }}>
+                Carrying {robot.carryingProductId}
+              </div>
+            )}
+          </div>
         </Html>
       )}
     </group>

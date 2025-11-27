@@ -1,10 +1,10 @@
 import { OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { generateProducts, generateRobots, STORE_BOUNDS } from './mockData'
 import { Products } from './Products'
 import { RobotMesh } from './RobotMesh'
-import type { Robot } from './types'
+import type { Product, Robot, RobotTask } from './types'
 import { useRobotSimulation } from '@/hooks/useRobotSimulation'
 
 interface StoreMapSceneProps {
@@ -12,21 +12,51 @@ interface StoreMapSceneProps {
   robotCount?: number
   initialRobots?: Robot[]
   trackedRobotId?: string | null
+  products?: Product[]
+  activeCommand?: RobotTask | null
+  onCommandComplete?: (commandId: string) => void
+  onTrackedRobotUpdate?: (robot: Robot | undefined) => void
 }
 
 export const StoreMapScene = ({
   productCount = 100000,
   robotCount = 50,
   initialRobots,
-  trackedRobotId
+  trackedRobotId,
+  products,
+  activeCommand,
+  onCommandComplete,
+  onTrackedRobotUpdate
 }: StoreMapSceneProps) => {
-  const products = useMemo(() => generateProducts(productCount), [productCount])
+  const productsToUse = useMemo(
+    () => products ?? generateProducts(productCount),
+    [productCount, products]
+  )
   const robotsToSimulate = useMemo(
     () => initialRobots ?? generateRobots(robotCount),
     [initialRobots, robotCount]
   )
-  const robots = useRobotSimulation(robotsToSimulate, products)
+  const robots = useRobotSimulation(
+    robotsToSimulate,
+    productsToUse,
+    activeCommand,
+    onCommandComplete
+  )
+  const trackedRobot = useMemo(
+    () => robots.find((robot) => robot.id === trackedRobotId),
+    [robots, trackedRobotId]
+  )
+  useEffect(() => {
+    onTrackedRobotUpdate?.(trackedRobot)
+  }, [onTrackedRobotUpdate, trackedRobot])
   const shouldShowLabel = robotCount <= 20
+  const targetProduct = useMemo(() => {
+    if (!activeCommand) return null
+    return (
+      productsToUse.find((product) => product.id === activeCommand.productId) ??
+      null
+    )
+  }, [activeCommand, productsToUse])
 
   return (
     <div className="w-full h-screen">
@@ -79,7 +109,31 @@ export const StoreMapScene = ({
           position={[0, 0.01, 0]}
         />
 
-        <Products products={products} />
+        <Products products={productsToUse} />
+        {targetProduct && (
+          <group position={[targetProduct.x, 0, targetProduct.y]}>
+            <mesh position={[0, 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <ringGeometry args={[0.8, 1.2, 36]} />
+              <meshBasicMaterial color="#ef4444" transparent opacity={0.75} />
+            </mesh>
+            <mesh position={[0, 1.2, 0]}>
+              <cylinderGeometry args={[0.08, 0.08, 1.5, 12]} />
+              <meshStandardMaterial
+                color="#ef4444"
+                emissive="#b91c1c"
+                emissiveIntensity={0.5}
+              />
+            </mesh>
+            <mesh position={[0, 2.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <coneGeometry args={[0.5, 0.9, 20]} />
+              <meshStandardMaterial
+                color="#ef4444"
+                emissive="#f87171"
+                emissiveIntensity={0.35}
+              />
+            </mesh>
+          </group>
+        )}
 
         {robots.map((robot) => (
           <RobotMesh

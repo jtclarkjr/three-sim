@@ -12,6 +12,7 @@ function RobotsMap() {
   const [sceneSeed, setSceneSeed] = useState(0)
   const [trackedRobotId, setTrackedRobotId] = useState<string | null>(null)
   const [sampleMagnitude, setSampleMagnitude] = useState<string | null>(null)
+  const [controlsOpen, setControlsOpen] = useState(true)
   const [initialRobots, setInitialRobots] = useState(() =>
     generateRobots(robotCount)
   )
@@ -60,96 +61,127 @@ function RobotsMap() {
         Home
       </Link>
 
-      <div className="absolute top-4 right-4 z-10 bg-slate-800/90 backdrop-blur-sm p-4 rounded-lg shadow-lg text-white">
-        <h2 className="text-xl font-bold mb-3 text-cyan-400">
-          Robots in store simulation
-        </h2>
-
-        <div className="space-y-3 text-sm">
-          <div>
-            <label
-              htmlFor={productRangeId}
-              className="block mb-1 text-gray-300"
-            >
-              Products: {productCount.toLocaleString()}
-            </label>
-            <input
-              id={productRangeId}
-              type="range"
-              min="1000"
-              max="100000"
-              step="1000"
-              value={productCount}
-              onChange={(e) => setProductCount(Number(e.target.value))}
-              className="w-full"
-            />
-          </div>
-
-          <div>
-            <label htmlFor={robotRangeId} className="block mb-1 text-gray-300">
-              Robots: {robotCount}
-            </label>
-            <input
-              id={robotRangeId}
-              type="range"
-              min="1"
-              max="50"
-              value={robotCount}
-              onChange={(e) => setRobotCount(Number(e.target.value))}
-              className="w-full"
-            />
-          </div>
-
-          <div>
-            <label htmlFor={trackSelectId} className="block mb-1 text-gray-300">
-              Track robot
-            </label>
-            <select
-              id={trackSelectId}
-              value={trackedRobotId ?? ''}
-              onChange={(event) => {
-                const selected = event.target.value
-                setTrackedRobotId(selected || null)
-              }}
-              className="w-full bg-slate-900/60 border border-slate-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-            >
-              <option value="">— None —</option>
-              {initialRobots.map((robot) => (
-                <option key={robot.id} value={robot.id}>
-                  {robot.name}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-400 mt-1">
-              Tracked robots are highlighted and labeled even in crowded scenes.
-            </p>
-          </div>
-
+      <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
+        {!controlsOpen && (
           <button
             type="button"
-            onClick={handleReset}
-            className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-semibold py-2 px-4 rounded transition-colors"
+            onClick={() => setControlsOpen(true)}
+            className="bg-slate-800/90 backdrop-blur-sm px-3 py-2 rounded-md text-sm text-cyan-200 border border-slate-700 shadow-md hover:bg-slate-700/90 transition-colors"
           >
-            Reset Positions
+            Open controls
           </button>
-        </div>
+        )}
 
-        <div className="mt-4 pt-3 border-t border-gray-700 text-xs text-gray-300 space-y-1">
-          <div className="flex items-center justify-between">
-            <span>Rust/Wasm compute:</span>
-            <span className="font-semibold">
-              {wasmReady ? 'Ready' : 'Loading...'}
-            </span>
-          </div>
-          <div className="text-gray-400">
-            Magnitude (3,4,0):{' '}
-            <span className="text-cyan-300">{sampleMagnitude ?? '—'}</span>
-          </div>
-        </div>
+        {controlsOpen && (
+          <div className="bg-slate-800/90 backdrop-blur-sm p-4 rounded-lg shadow-lg text-white w-80 max-w-[90vw]">
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-xl font-bold text-cyan-400">
+                Robots in store simulation
+              </h2>
+              <button
+                type="button"
+                aria-label="Minimize controls"
+                onClick={() => setControlsOpen(false)}
+                className="text-gray-400 hover:text-cyan-300 transition-colors"
+              >
+                ⎯
+              </button>
+            </div>
 
-        <div className="mt-3 pt-3 border-t border-gray-700 text-xs text-gray-400">
-          <p>Use mouse to pan, zoom, and rotate the view</p>
-        </div>
+            <div className="space-y-3 text-sm mt-3">
+              <div>
+                <label
+                  htmlFor={productRangeId}
+                  className="block mb-1 text-gray-300"
+                >
+                  Products: {productCount.toLocaleString()}
+                </label>
+                <input
+                  id={productRangeId}
+                  type="range"
+                  min="1000"
+                  max="100000"
+                  step="1000"
+                  value={productCount}
+                  onChange={(e) => setProductCount(Number(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor={robotRangeId}
+                  className="block mb-1 text-gray-300"
+                >
+                  Robots: {robotCount}
+                </label>
+                <input
+                  id={robotRangeId}
+                  type="range"
+                  min="1"
+                  max="50"
+                  value={robotCount}
+                  onChange={(e) => setRobotCount(Number(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor={trackSelectId}
+                  className="block mb-1 text-gray-300"
+                >
+                  Track robot
+                </label>
+                <select
+                  id={trackSelectId}
+                  value={trackedRobotId ?? ''}
+                  onChange={(event) => {
+                    const selected = event.target.value
+                    setTrackedRobotId(selected || null)
+                  }}
+                  className="w-full bg-slate-900/60 border border-slate-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                >
+                  <option value="">— None —</option>
+                  {initialRobots.map((robot) => (
+                    <option key={robot.id} value={robot.id}>
+                      {robot.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-1">
+                  Tracked robots are highlighted and labeled even in crowded
+                  scenes.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleReset}
+                className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-semibold py-2 px-4 rounded transition-colors"
+              >
+                Reset Positions
+              </button>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-gray-700 text-xs text-gray-300 space-y-1">
+              <div className="flex items-center justify-between">
+                <span>Rust/Wasm compute:</span>
+                <span className="font-semibold">
+                  {wasmReady ? 'Ready' : 'Loading...'}
+                </span>
+              </div>
+              <div className="text-gray-400">
+                Magnitude (3,4,0):{' '}
+                <span className="text-cyan-300">{sampleMagnitude ?? '—'}</span>
+              </div>
+            </div>
+
+            <div className="mt-3 pt-3 border-t border-gray-700 text-xs text-gray-400">
+              <p>Use mouse to pan, zoom, and rotate the view</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <StoreMapScene

@@ -18,6 +18,7 @@ positions and movements in a 3D store environment.
 - **React 19** - UI framework
 - **Three.js** - 3D graphics library
 - **@react-three/fiber** - React renderer for Three.js
+- **Rust + WebAssembly** - Performance-critical computations
 - **TanStack Router** - Type-safe routing
 - **TanStack Start** - Full-stack React framework
 - **Tailwind CSS v4** - Styling

@@ -53,7 +53,6 @@ pub fn lerp_vectors(a: &[f32], b: &[f32], t: f32) -> Vec<f32> {
         .collect()
 }
 
-        if (x - mid_x).abs() < cross_aisle_width / 2.0 {
 /// Update multiple robots in parallel
 /// Input format per robot: [x, y, destX, destY, orientation, speed, lastMoveTime]
 #[wasm_bindgen]

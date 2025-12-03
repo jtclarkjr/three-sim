@@ -35,6 +35,7 @@ export const TrackedRobotMesh = () => {
         />
       </mesh>
 
+      {/* Eyes */}
       <mesh position={[-0.65, 1.7, 0.6]} castShadow>
         <sphereGeometry args={[0.18, 12, 12]} />
         <meshStandardMaterial
@@ -44,6 +45,7 @@ export const TrackedRobotMesh = () => {
         />
       </mesh>
 
+      {/* Left wheel */}
       <mesh
         position={[0.9, 0.35, 0]}
         rotation={[Math.PI / 2, 0, 0]}
@@ -52,9 +54,10 @@ export const TrackedRobotMesh = () => {
         receiveShadow
       >
         <torusGeometry args={[0.55, 0.14, 12, 32]} />
-        <meshStandardMaterial color="#0f172a" roughness={0.9} />
+        <meshStandardMaterial color="#bebebeff" roughness={0.9} />
       </mesh>
 
+      {/* Right wheel */}
       <mesh
         position={[-0.9, 0.35, 0]}
         rotation={[Math.PI / 2, 0, 0]}
@@ -63,12 +66,13 @@ export const TrackedRobotMesh = () => {
         receiveShadow
       >
         <torusGeometry args={[0.55, 0.14, 12, 32]} />
-        <meshStandardMaterial color="#0f172a" roughness={0.9} />
+        <meshStandardMaterial color="#bebebeff" roughness={0.9} />
       </mesh>
 
+      {/* Bottom base */}
       <mesh position={[0, 0.3, 0]} castShadow receiveShadow>
         <boxGeometry args={[2.4, 0.4, 1.8]} />
-        <meshStandardMaterial color="#1f2937" roughness={0.9} />
+        <meshStandardMaterial color="#f5b342ff" roughness={0.9} />
       </mesh>
     </group>
   )

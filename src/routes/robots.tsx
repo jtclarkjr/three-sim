@@ -2,10 +2,10 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useId, useMemo, useState } from 'react'
 import {
   AISLE_CONFIG,
-  STORE_BOUNDS,
   generateProducts,
   generateRobots,
-  getAisleCenterX
+  getAisleCenterX,
+  STORE_BOUNDS
 } from '@/components/store-map/mockData'
 import { StoreMapScene } from '@/components/store-map/StoreMapScene'
 import type { Product, Robot, RobotTask } from '@/components/store-map/types'

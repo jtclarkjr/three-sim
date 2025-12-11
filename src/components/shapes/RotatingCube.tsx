@@ -1,6 +1,6 @@
 import { RoundedBox } from '@react-three/drei'
 import { useRotation } from '@/hooks/useRotation'
-import { Scene3D } from './_resuables/Scene3D'
+import { Scene3D } from '../_resuables/Scene3D'
 
 interface CubeProps {
   rotationDelta: { x: number; y: number }

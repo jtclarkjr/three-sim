@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { GridFloor } from '@/components/grid/GridFloor'
-import { RotatingCard } from '@/components/RotatingCard'
-import { RotatingCone } from '@/components/RotatingCone'
-import { RotatingCube } from '@/components/RotatingCube'
-import { RotatingSphere } from '@/components/RotatingSphere'
-import { RotatingTorus } from '@/components/RotatingTorus'
+import { RotatingCard } from '@/components/shapes/RotatingCard'
+import { RotatingCone } from '@/components/shapes/RotatingCone'
+import { RotatingCube } from '@/components/shapes/RotatingCube'
+import { RotatingSphere } from '@/components/shapes/RotatingSphere'
+import { RotatingTorus } from '@/components/shapes/RotatingTorus'
 
 export const Route = createFileRoute('/shapes')({ component: App })
 

@@ -36,6 +36,15 @@ function Home() {
               Robots
             </span>
           </Link>
+
+          <Link
+            to="/architecture"
+            className="group relative px-8 py-4 bg-amber-500/10 border-2 border-amber-400/50 rounded-lg hover:bg-amber-500/20 hover:border-amber-400 transition-all duration-300 shadow-lg hover:shadow-amber-500/50"
+          >
+            <span className="text-2xl font-bold text-amber-400 group-hover:text-amber-300 transition-colors">
+              Architecture
+            </span>
+          </Link>
         </div>
       </div>
     </div>

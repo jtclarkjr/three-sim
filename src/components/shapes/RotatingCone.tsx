@@ -1,5 +1,5 @@
 import { useRotation } from '@/hooks/useRotation'
-import { Scene3D } from './_resuables/Scene3D'
+import { Scene3D } from '../_resuables/Scene3D'
 
 interface ConeProps {
   rotationDelta: { x: number; y: number }

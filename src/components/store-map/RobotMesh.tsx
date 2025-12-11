@@ -1,12 +1,12 @@
 import { Html } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef, useState } from 'react'
-import { Vector3 } from 'three'
 import type { Group } from 'three'
+import { Vector3 } from 'three'
 import { DomeRobotMesh } from './DomeRobotMesh'
 import { TrackedRobotMesh } from './TrackedRobotMesh'
-import { WalkingRobotMesh } from './WalkingRobotMesh'
 import type { Robot } from './types'
+import { WalkingRobotMesh } from './WalkingRobotMesh'
 
 interface RobotMeshProps {
   robot: Robot

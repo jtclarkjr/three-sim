@@ -1,11 +1,11 @@
 import { OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { useEffect, useMemo } from 'react'
+import { useRobotSimulation } from '@/hooks/useRobotSimulation'
 import { generateProducts, generateRobots, STORE_BOUNDS } from './mockData'
 import { Products } from './Products'
 import { RobotMesh } from './RobotMesh'
 import type { Product, Robot, RobotTask } from './types'
-import { useRobotSimulation } from '@/hooks/useRobotSimulation'
 
 interface StoreMapSceneProps {
   productCount?: number

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ShapesRouteImport } from './routes/shapes'
 import { Route as RobotsRouteImport } from './routes/robots'
+import { Route as ArchitectureRouteImport } from './routes/architecture'
 import { Route as IndexRouteImport } from './routes/index'
 
 const ShapesRoute = ShapesRouteImport.update({
@@ -23,6 +24,11 @@ const RobotsRoute = RobotsRouteImport.update({
   path: '/robots',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ArchitectureRoute = ArchitectureRouteImport.update({
+  id: '/architecture',
+  path: '/architecture',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,30 +37,34 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/architecture': typeof ArchitectureRoute
   '/robots': typeof RobotsRoute
   '/shapes': typeof ShapesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/architecture': typeof ArchitectureRoute
   '/robots': typeof RobotsRoute
   '/shapes': typeof ShapesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/architecture': typeof ArchitectureRoute
   '/robots': typeof RobotsRoute
   '/shapes': typeof ShapesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/robots' | '/shapes'
+  fullPaths: '/' | '/architecture' | '/robots' | '/shapes'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/robots' | '/shapes'
-  id: '__root__' | '/' | '/robots' | '/shapes'
+  to: '/' | '/architecture' | '/robots' | '/shapes'
+  id: '__root__' | '/' | '/architecture' | '/robots' | '/shapes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ArchitectureRoute: typeof ArchitectureRoute
   RobotsRoute: typeof RobotsRoute
   ShapesRoute: typeof ShapesRoute
 }
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RobotsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/architecture': {
+      id: '/architecture'
+      path: '/architecture'
+      fullPath: '/architecture'
+      preLoaderRoute: typeof ArchitectureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ArchitectureRoute: ArchitectureRoute,
   RobotsRoute: RobotsRoute,
   ShapesRoute: ShapesRoute,
 }

@@ -6,7 +6,7 @@ import {
   createAceOfSpadesTexture,
   createCardBackTexture
 } from '@/utils/cardTextures'
-import { Scene3D } from './_resuables/Scene3D'
+import { Scene3D } from '../_resuables/Scene3D'
 
 interface CardProps {
   rotationDelta: { x: number; y: number }

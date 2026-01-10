@@ -61,6 +61,37 @@ Preview the production build:
 bun serve
 ```
 
+## Database Setup
+
+This project uses Drizzle ORM with SQLite for persisting simulation state and robot configurations.
+
+### Initial Setup
+
+Generate the database schema and run migrations:
+
+```bash
+bun db:generate   # Generate migrations from schema
+bun db:migrate    # Apply migrations to database
+```
+
+### Seed Database
+
+Populate the database with initial data:
+
+```bash
+bun db:seed
+```
+
+### Database Studio
+
+Open Drizzle Studio to view and manage your database:
+
+```bash
+bun db:studio
+```
+
+The database file is stored as `sqlite.db` in the project root (or use `DATABASE_URL` environment variable to specify a different location).
+
 ## Rust + WebAssembly compute
 
 Heavy computations can run in Rust and be consumed in React via WebAssembly.

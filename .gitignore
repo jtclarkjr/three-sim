@@ -5,9 +5,16 @@ dist-ssr
 *.local
 count.txt
 .env
+.env.local
 .nitro
 .tanstack
 .wrangler
 .output
 .vinxi
 todos.json
+
+# Database
+sqlite.db
+sqlite.db-journal
+*.db
+*.db-journal

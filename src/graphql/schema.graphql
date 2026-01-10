@@ -1,0 +1,53 @@
+type Query {
+  simulationConfig: SimulationConfig
+  products: [Product!]!
+  productCount: Int!
+}
+
+type Mutation {
+  saveSimulation(input: SaveSimulationInput!): SaveSimulationResult!
+  resetSimulation: ResetSimulationResult!
+}
+
+type SimulationConfig {
+  productCount: Int!
+  robotCount: Int!
+  trackedRobotId: String
+  pickupProductId: String
+  dropAisle: Int
+  dropProgress: Int
+  updatedAt: String!
+}
+
+type Product {
+  id: String!
+  x: Float!
+  y: Float!
+}
+
+input SaveSimulationInput {
+  productCount: Int!
+  robotCount: Int!
+  trackedRobotId: String
+  pickupProductId: String
+  dropAisle: Int
+  dropProgress: Int
+  products: [ProductInput!]!
+}
+
+input ProductInput {
+  id: String!
+  x: Float!
+  y: Float!
+}
+
+type SaveSimulationResult {
+  success: Boolean!
+  message: String
+  config: SimulationConfig
+}
+
+type ResetSimulationResult {
+  success: Boolean!
+  message: String
+}

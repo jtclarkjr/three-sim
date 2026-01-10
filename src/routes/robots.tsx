@@ -9,29 +9,97 @@ import {
 } from '@/components/store-map/mockData'
 import { StoreMapScene } from '@/components/store-map/StoreMapScene'
 import type { Product, Robot, RobotTask } from '@/components/store-map/types'
+import {
+  getProducts,
+  getSimulationConfig,
+  resetSimulation,
+  saveSimulation
+} from '@/graphql/client'
 import { useWasmCompute } from '@/hooks/useWasmCompute'
 
-export const Route = createFileRoute('/robots')({ component: RobotsMap })
+type LoaderData = {
+  productCount: number
+  robotCount: number
+  trackedRobotId: string | null
+  pickupProductId: string | null
+  dropAisle: number | null
+  dropProgress: number | null
+  products: Product[]
+  isPersisted: boolean
+}
+
+export const Route = createFileRoute('/robots')({
+  component: RobotsMap,
+  loader: async (): Promise<LoaderData> => {
+    try {
+      const [config, products] = await Promise.all([
+        getSimulationConfig(),
+        getProducts()
+      ])
+
+      if (
+        config &&
+        products.length > 0 &&
+        products.length === config.productCount
+      ) {
+        return {
+          productCount: config.productCount,
+          robotCount: config.robotCount,
+          trackedRobotId: config.trackedRobotId,
+          pickupProductId: config.pickupProductId,
+          dropAisle: config.dropAisle,
+          dropProgress: config.dropProgress,
+          products: products as Product[],
+          isPersisted: true
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load persisted data:', error)
+    }
+
+    const defaultProductCount = 20000
+    const defaultRobotCount = 30
+
+    return {
+      productCount: defaultProductCount,
+      robotCount: defaultRobotCount,
+      trackedRobotId: null,
+      pickupProductId: null,
+      dropAisle: null,
+      dropProgress: null,
+      products: generateProducts(defaultProductCount),
+      isPersisted: false
+    }
+  }
+})
 
 function RobotsMap() {
-  const [productCount, setProductCount] = useState(20000)
-  const [robotCount, setRobotCount] = useState(30)
+  const loaderData = Route.useLoaderData()
+  const [productCount, setProductCount] = useState(loaderData.productCount)
+  const [robotCount, setRobotCount] = useState(loaderData.robotCount)
   const [sceneSeed, setSceneSeed] = useState(0)
-  const [trackedRobotId, setTrackedRobotId] = useState<string | null>(null)
+  const [trackedRobotId, setTrackedRobotId] = useState<string | null>(
+    loaderData.trackedRobotId
+  )
   const [sampleMagnitude, setSampleMagnitude] = useState<string | null>(null)
   const [controlsOpen, setControlsOpen] = useState(true)
-  const [products, setProducts] = useState<Product[]>(() =>
-    generateProducts(productCount)
-  )
+  const [products, setProducts] = useState<Product[]>(loaderData.products)
   const [initialRobots, setInitialRobots] = useState(() =>
-    generateRobots(robotCount)
+    generateRobots(loaderData.robotCount)
   )
-  const [pickupProductId, setPickupProductId] = useState<string>('')
-  const [dropAisle, setDropAisle] = useState(1)
-  const [dropProgress, setDropProgress] = useState(50)
+  const [pickupProductId, setPickupProductId] = useState<string>(
+    loaderData.pickupProductId || ''
+  )
+  const [dropAisle, setDropAisle] = useState(loaderData.dropAisle || 1)
+  const [dropProgress, setDropProgress] = useState(
+    loaderData.dropProgress || 50
+  )
   const [activeCommand, setActiveCommand] = useState<RobotTask | null>(null)
   const [commandStatus, setCommandStatus] = useState<string | null>(null)
   const [trackedRobotState, setTrackedRobotState] = useState<Robot | null>(null)
+  const [isPersisted, setIsPersisted] = useState(loaderData.isPersisted)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<string | null>(null)
   const productRangeId = useId()
   const robotRangeId = useId()
   const trackSelectId = useId()
@@ -83,6 +151,48 @@ function RobotsMap() {
   const handleReset = () => {
     setSceneSeed((prev) => prev + 1)
     setCommandStatus(null)
+  }
+
+  const handleSaveConfiguration = async () => {
+    setIsSaving(true)
+    setSaveStatus(null)
+
+    try {
+      const result: { success: boolean; message: string | null } =
+        await saveSimulation({
+          productCount,
+          robotCount,
+          trackedRobotId,
+          pickupProductId: pickupProductId || null,
+          dropAisle,
+          dropProgress,
+          products
+        })
+
+      if (result.success) {
+        setSaveStatus('Configuration saved successfully!')
+        setIsPersisted(true)
+      } else {
+        setSaveStatus(`Save failed: ${result.message}`)
+      }
+    } catch (error) {
+      setSaveStatus(
+        `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      )
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleResetToDefaults = async () => {
+    try {
+      await resetSimulation()
+      window.location.reload()
+    } catch (error) {
+      setSaveStatus(
+        `Reset failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      )
+    }
   }
 
   const computeDropTarget = (aisleNumber: number, positionPercent: number) => {
@@ -404,6 +514,34 @@ function RobotsMap() {
               className="mt-3 w-full bg-cyan-500 hover:bg-cyan-600 text-white font-semibold py-2 px-4 rounded transition-colors cursor-pointer"
             >
               Reset Positions
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSaveConfiguration}
+              disabled={isSaving}
+              className="mt-3 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {isSaving ? 'Saving...' : 'Save Configuration'}
+            </button>
+
+            {saveStatus && (
+              <p className="mt-2 text-xs text-cyan-300">{saveStatus}</p>
+            )}
+
+            {isPersisted && (
+              <div className="mt-2 flex items-center gap-2 text-xs text-green-400">
+                <span>✓</span>
+                <span>Using saved configuration</span>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleResetToDefaults}
+              className="mt-3 w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded transition-colors cursor-pointer"
+            >
+              Reset to Defaults
             </button>
           </div>
         )}

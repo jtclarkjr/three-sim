@@ -9,13 +9,13 @@ export type WasmApi = {
   computePath: (
     start: Float32Array,
     end: Float32Array,
-    bounds: Float32Array,
+    config: Float32Array,
     preferOuterWalkway: boolean
   ) => Float32Array | number[]
   updateRobots: (
     robots: Float32Array,
     products: Float32Array,
-    bounds: Float32Array,
+    config: Float32Array,
     deltaMs: number
   ) => Float32Array | number[]
   moveRobotToWaypoint: (robotData: Float32Array) => Float32Array | number[]

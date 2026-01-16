@@ -45,6 +45,16 @@ type SimulationConfigResponse = {
   pickupProductId: string | null
   dropAisle: number | null
   dropProgress: number | null
+  aisleCount: number | null
+  aisleSpacing: number | null
+  aisleWidth: number | null
+  startOffset: number | null
+  walkwayWidth: number | null
+  crossAisleBuffer: number | null
+  outerWalkwayOffset: number | null
+  storeWidth: number | null
+  storeHeight: number | null
+  orientation: string | null
   updatedAt: string
 } | null
 
@@ -62,6 +72,16 @@ export const getSimulationConfig: () => Promise<SimulationConfigResponse> =
             pickupProductId
             dropAisle
             dropProgress
+            aisleCount
+            aisleSpacing
+            aisleWidth
+            startOffset
+            walkwayWidth
+            crossAisleBuffer
+            outerWalkwayOffset
+            storeWidth
+            storeHeight
+            orientation
             updatedAt
           }
         }`
@@ -98,6 +118,16 @@ type SaveSimulationInput = {
   pickupProductId?: string | null
   dropAisle?: number | null
   dropProgress?: number | null
+  aisleCount?: number | null
+  aisleSpacing?: number | null
+  aisleWidth?: number | null
+  startOffset?: number | null
+  walkwayWidth?: number | null
+  crossAisleBuffer?: number | null
+  outerWalkwayOffset?: number | null
+  storeWidth?: number | null
+  storeHeight?: number | null
+  orientation?: string | null
   products: Array<{ id: string; x: number; y: number }>
 }
 

@@ -9,6 +9,16 @@ export const simulationConfig = sqliteTable('simulation_config', {
   pickupProductId: text('pickup_product_id'),
   dropAisle: integer('drop_aisle').default(1),
   dropProgress: integer('drop_progress').default(50),
+  aisleCount: integer('aisle_count').default(6),
+  aisleSpacing: real('aisle_spacing').default(40),
+  aisleWidth: real('aisle_width').default(6),
+  startOffset: real('start_offset').default(20),
+  walkwayWidth: real('walkway_width').default(10),
+  crossAisleBuffer: real('cross_aisle_buffer').default(4),
+  outerWalkwayOffset: real('outer_walkway_offset').default(12),
+  storeWidth: real('store_width').default(250),
+  storeHeight: real('store_height').default(150),
+  orientation: text('orientation').default('vertical'),
   updatedAt: integer('updated_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`)

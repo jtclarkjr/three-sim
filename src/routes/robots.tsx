@@ -1,14 +1,24 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import {
-  AISLE_CONFIG,
   generateProducts,
   generateRobots,
-  getAisleCenterX,
-  STORE_BOUNDS
+  getAisleCenterCoord
 } from '@/components/store-map/mockData'
 import { StoreMapScene } from '@/components/store-map/StoreMapScene'
-import type { Product, Robot, RobotTask } from '@/components/store-map/types'
+import type {
+  AisleConfig,
+  Product,
+  Robot,
+  RobotTask
+} from '@/components/store-map/types'
+import {
+  AISLE_CONFIG_CONSTRAINTS,
+  calculateRequiredStoreWidth,
+  DEFAULT_AISLE_CONFIG,
+  validateAndAdjustAisleConfig,
+  willAislesFit
+} from '@/components/store-map/types'
 import {
   getProducts,
   getSimulationConfig,
@@ -24,6 +34,7 @@ type LoaderData = {
   pickupProductId: string | null
   dropAisle: number | null
   dropProgress: number | null
+  aisleConfig: AisleConfig
   products: Product[]
   isPersisted: boolean
 }
@@ -42,6 +53,25 @@ export const Route = createFileRoute('/robots')({
         products.length > 0 &&
         products.length === config.productCount
       ) {
+        const aisleConfig: AisleConfig = {
+          count: config.aisleCount ?? DEFAULT_AISLE_CONFIG.count,
+          spacing: config.aisleSpacing ?? DEFAULT_AISLE_CONFIG.spacing,
+          width: config.aisleWidth ?? DEFAULT_AISLE_CONFIG.width,
+          startOffset: config.startOffset ?? DEFAULT_AISLE_CONFIG.startOffset,
+          walkwayWidth:
+            config.walkwayWidth ?? DEFAULT_AISLE_CONFIG.walkwayWidth,
+          crossAisleBuffer:
+            config.crossAisleBuffer ?? DEFAULT_AISLE_CONFIG.crossAisleBuffer,
+          outerWalkwayOffset:
+            config.outerWalkwayOffset ??
+            DEFAULT_AISLE_CONFIG.outerWalkwayOffset,
+          storeWidth: config.storeWidth ?? DEFAULT_AISLE_CONFIG.storeWidth,
+          storeHeight: config.storeHeight ?? DEFAULT_AISLE_CONFIG.storeHeight,
+          orientation:
+            (config.orientation as 'vertical' | 'horizontal') ??
+            DEFAULT_AISLE_CONFIG.orientation
+        }
+
         return {
           productCount: config.productCount,
           robotCount: config.robotCount,
@@ -49,6 +79,7 @@ export const Route = createFileRoute('/robots')({
           pickupProductId: config.pickupProductId,
           dropAisle: config.dropAisle,
           dropProgress: config.dropProgress,
+          aisleConfig,
           products: products as Product[],
           isPersisted: true
         }
@@ -67,6 +98,7 @@ export const Route = createFileRoute('/robots')({
       pickupProductId: null,
       dropAisle: null,
       dropProgress: null,
+      aisleConfig: DEFAULT_AISLE_CONFIG,
       products: generateProducts(defaultProductCount),
       isPersisted: false
     }
@@ -83,9 +115,13 @@ function RobotsMap() {
   )
   const [sampleMagnitude, setSampleMagnitude] = useState<string | null>(null)
   const [controlsOpen, setControlsOpen] = useState(true)
+  const [aisleConfig, setAisleConfig] = useState<AisleConfig>(
+    loaderData.aisleConfig
+  )
+  const [layoutSeed, setLayoutSeed] = useState(0)
   const [products, setProducts] = useState<Product[]>(loaderData.products)
   const [initialRobots, setInitialRobots] = useState(() =>
-    generateRobots(loaderData.robotCount)
+    generateRobots(loaderData.robotCount, loaderData.aisleConfig)
   )
   const [pickupProductId, setPickupProductId] = useState<string>(
     loaderData.pickupProductId || ''
@@ -100,16 +136,22 @@ function RobotsMap() {
   const [isPersisted, setIsPersisted] = useState(loaderData.isPersisted)
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<string | null>(null)
+  const [advancedOpen, setAdvancedOpen] = useState(false)
   const productRangeId = useId()
   const robotRangeId = useId()
   const trackSelectId = useId()
   const pickupSelectId = useId()
   const dropAisleId = useId()
   const dropPosId = useId()
+  const aisleCountId = useId()
+  const aisleSpacingId = useId()
+  const aisleWidthId = useId()
+  const storeWidthId = useId()
+  const storeHeightId = useId()
   const { ready: wasmReady, computeMagnitudes } = useWasmCompute()
   const aisleOptions = useMemo(
-    () => Array.from({ length: AISLE_CONFIG.count }, (_, idx) => idx + 1),
-    []
+    () => Array.from({ length: aisleConfig.count }, (_, idx) => idx + 1),
+    [aisleConfig.count]
   )
 
   useEffect(() => {
@@ -119,14 +161,25 @@ function RobotsMap() {
     setSampleMagnitude(result[0]?.toFixed(2) ?? null)
   }, [computeMagnitudes, wasmReady])
 
+  const updateAisleConfig = useCallback((updates: Partial<AisleConfig>) => {
+    setAisleConfig((prev) => {
+      const updated = { ...prev, ...updates }
+      return validateAndAdjustAisleConfig(updated)
+    })
+    setTimeout(() => {
+      setLayoutSeed((prev) => prev + 1)
+    }, 300)
+  }, [])
+
   useEffect(() => {
     // Re-roll robots when sceneSeed changes, even if the count stays the same
     void sceneSeed
-    setInitialRobots(generateRobots(robotCount))
-    setProducts(generateProducts(productCount))
+    void layoutSeed
+    setInitialRobots(generateRobots(robotCount, aisleConfig))
+    setProducts(generateProducts(productCount, aisleConfig))
     setPickupProductId('')
     setActiveCommand(null)
-  }, [productCount, robotCount, sceneSeed])
+  }, [productCount, robotCount, sceneSeed, layoutSeed, aisleConfig])
 
   useEffect(() => {
     if (!initialRobots.length) {
@@ -166,6 +219,16 @@ function RobotsMap() {
           pickupProductId: pickupProductId || null,
           dropAisle,
           dropProgress,
+          aisleCount: aisleConfig.count,
+          aisleSpacing: aisleConfig.spacing,
+          aisleWidth: aisleConfig.width,
+          startOffset: aisleConfig.startOffset,
+          walkwayWidth: aisleConfig.walkwayWidth,
+          crossAisleBuffer: aisleConfig.crossAisleBuffer,
+          outerWalkwayOffset: aisleConfig.outerWalkwayOffset,
+          storeWidth: aisleConfig.storeWidth,
+          storeHeight: aisleConfig.storeHeight,
+          orientation: aisleConfig.orientation,
           products
         })
 
@@ -196,10 +259,11 @@ function RobotsMap() {
   }
 
   const computeDropTarget = (aisleNumber: number, positionPercent: number) => {
-    const clampedAisle = Math.min(Math.max(aisleNumber, 1), AISLE_CONFIG.count)
+    const clampedAisle = Math.min(Math.max(aisleNumber, 1), aisleConfig.count)
     const ratio = Math.min(Math.max(positionPercent, 0), 100) / 100
-    const x = getAisleCenterX(clampedAisle - 1)
-    const y = -STORE_BOUNDS.height / 2 + 15 + ratio * (STORE_BOUNDS.height - 30)
+    const x = getAisleCenterCoord(clampedAisle - 1, aisleConfig)
+    const y =
+      -aisleConfig.storeHeight / 2 + 15 + ratio * (aisleConfig.storeHeight - 30)
     return { x, y }
   }
 
@@ -287,7 +351,7 @@ function RobotsMap() {
         )}
 
         {controlsOpen && (
-          <div className="bg-slate-800/90 backdrop-blur-sm p-4 rounded-lg shadow-lg text-white w-80 max-w-[90vw]">
+          <div className="bg-slate-800/90 backdrop-blur-sm p-4 rounded-lg shadow-lg text-white w-80 max-w-[90vw] max-h-[calc(100vh-2rem)] overflow-y-auto">
             <div className="flex items-start justify-between gap-3">
               <h2 className="text-xl font-bold text-cyan-400">
                 Robots in store simulation
@@ -300,6 +364,26 @@ function RobotsMap() {
               >
                 ⎯
               </button>
+            </div>
+
+            <div className="mt-3 mb-4 p-3 bg-slate-950/60 rounded border border-slate-700/40">
+              <div className="text-xs font-semibold text-cyan-300 mb-2">
+                Camera Controls
+              </div>
+              <div className="text-xs space-y-1 text-gray-300">
+                <div className="flex items-start gap-2">
+                  <span className="text-cyan-400 shrink-0">Orbit:</span>
+                  <span>Left click + drag</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-cyan-400 shrink-0">Pan:</span>
+                  <span>Right click + drag</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-cyan-400 shrink-0">Zoom:</span>
+                  <span>Scroll wheel</span>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-3 text-sm mt-3">
@@ -382,6 +466,155 @@ function RobotsMap() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              <div className="p-3 rounded-md bg-slate-900/40 border border-slate-700/60 space-y-3">
+                <div className="text-gray-200 font-semibold text-sm">
+                  Store Layout Configuration
+                </div>
+                <p className="text-xs text-gray-400">
+                  Adjust aisle layout in real-time
+                </p>
+                <div className="text-xs bg-slate-950/60 p-2 rounded border border-slate-700/40">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">Store size:</span>
+                    <span className="text-cyan-300">
+                      {aisleConfig.storeWidth} × {aisleConfig.storeHeight}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-gray-400">Required:</span>
+                    <span
+                      className={
+                        willAislesFit(aisleConfig)
+                          ? 'text-green-400'
+                          : 'text-amber-400'
+                      }
+                    >
+                      {calculateRequiredStoreWidth(aisleConfig).toFixed(0)} wide
+                    </span>
+                  </div>
+                  {!willAislesFit(aisleConfig) && (
+                    <div className="mt-2 text-amber-400 flex items-start gap-1">
+                      <span>⚠</span>
+                      <span>Store will auto-expand to fit aisles</span>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label
+                    htmlFor={aisleCountId}
+                    className="block mb-1 text-gray-300"
+                  >
+                    Aisles: {aisleConfig.count}
+                  </label>
+                  <input
+                    id={aisleCountId}
+                    type="range"
+                    min={AISLE_CONFIG_CONSTRAINTS.count.min}
+                    max={AISLE_CONFIG_CONSTRAINTS.count.max}
+                    value={aisleConfig.count}
+                    onChange={(e) =>
+                      updateAisleConfig({ count: Number(e.target.value) })
+                    }
+                    className="w-full cursor-pointer"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor={aisleSpacingId}
+                    className="block mb-1 text-gray-300"
+                  >
+                    Spacing: {aisleConfig.spacing}
+                  </label>
+                  <input
+                    id={aisleSpacingId}
+                    type="range"
+                    min={AISLE_CONFIG_CONSTRAINTS.spacing.min}
+                    max={AISLE_CONFIG_CONSTRAINTS.spacing.max}
+                    value={aisleConfig.spacing}
+                    onChange={(e) =>
+                      updateAisleConfig({ spacing: Number(e.target.value) })
+                    }
+                    className="w-full cursor-pointer"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor={aisleWidthId}
+                    className="block mb-1 text-gray-300"
+                  >
+                    Width: {aisleConfig.width}
+                  </label>
+                  <input
+                    id={aisleWidthId}
+                    type="range"
+                    min={AISLE_CONFIG_CONSTRAINTS.width.min}
+                    max={AISLE_CONFIG_CONSTRAINTS.width.max}
+                    value={aisleConfig.width}
+                    onChange={(e) =>
+                      updateAisleConfig({ width: Number(e.target.value) })
+                    }
+                    className="w-full cursor-pointer"
+                  />
+                </div>
+                <details
+                  open={advancedOpen}
+                  onToggle={(e) =>
+                    setAdvancedOpen((e.target as HTMLDetailsElement).open)
+                  }
+                  className="mt-3"
+                >
+                  <summary className="cursor-pointer text-sm text-gray-300 hover:text-cyan-400 transition-colors">
+                    Advanced Store Settings
+                  </summary>
+                  <div className="mt-3 space-y-3 pl-2">
+                    <div>
+                      <label
+                        htmlFor={storeWidthId}
+                        className="block mb-1 text-gray-300"
+                      >
+                        Store Width: {aisleConfig.storeWidth}
+                      </label>
+                      <input
+                        id={storeWidthId}
+                        type="range"
+                        min={AISLE_CONFIG_CONSTRAINTS.storeWidth.min}
+                        max={AISLE_CONFIG_CONSTRAINTS.storeWidth.max}
+                        step="10"
+                        value={aisleConfig.storeWidth}
+                        onChange={(e) =>
+                          updateAisleConfig({
+                            storeWidth: Number(e.target.value)
+                          })
+                        }
+                        className="w-full cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor={storeHeightId}
+                        className="block mb-1 text-gray-300"
+                      >
+                        Store Height: {aisleConfig.storeHeight}
+                      </label>
+                      <input
+                        id={storeHeightId}
+                        type="range"
+                        min={AISLE_CONFIG_CONSTRAINTS.storeHeight.min}
+                        max={AISLE_CONFIG_CONSTRAINTS.storeHeight.max}
+                        step="10"
+                        value={aisleConfig.storeHeight}
+                        onChange={(e) =>
+                          updateAisleConfig({
+                            storeHeight: Number(e.target.value)
+                          })
+                        }
+                        className="w-full cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                </details>
               </div>
 
               <div className="p-3 rounded-md bg-slate-900/40 border border-slate-700/60 space-y-3">
@@ -557,6 +790,7 @@ function RobotsMap() {
         activeCommand={activeCommand}
         onCommandComplete={handleCommandComplete}
         onTrackedRobotUpdate={(robot) => setTrackedRobotState(robot ?? null)}
+        aisleConfig={aisleConfig}
       />
     </div>
   )

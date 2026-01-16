@@ -55,14 +55,14 @@ pub fn lerp_vectors(a: &[f32], b: &[f32], t: f32) -> Vec<f32> {
 
 /// Update multiple robots in parallel
 /// Input format per robot: [x, y, destX, destY, orientation, speed, lastMoveTime]
+/// Config format: [storeWidth, storeHeight, aisleCount, aisleSpacing, aisleWidth, startOffset, walkwayWidth, crossAisleBuffer, outerWalkwayOffset, orientation]
 #[wasm_bindgen]
-pub fn update_robots(robots: &[f32], products: &[f32], bounds: &[f32], delta_ms: f32) -> Vec<f32> {
+pub fn update_robots(robots: &[f32], products: &[f32], config: &[f32], delta_ms: f32) -> Vec<f32> {
     if !robots.len().is_multiple_of(7) {
         return Vec::new();
     }
 
-    let width = bounds.first().copied().unwrap_or(250.0);
-    let height = bounds.get(1).copied().unwrap_or(150.0);
+    let store_config = StoreConfig::from_buffer(config);
     let delta = if delta_ms > 0.0 {
         delta_ms
     } else {
@@ -72,8 +72,8 @@ pub fn update_robots(robots: &[f32], products: &[f32], bounds: &[f32], delta_ms:
 
     for chunk in robots.chunks_exact(7) {
         let result = update_single_robot(
-            chunk[0], chunk[1], chunk[2], chunk[3], chunk[4], chunk[5], chunk[6], products, width,
-            height, delta,
+            chunk[0], chunk[1], chunk[2], chunk[3], chunk[4], chunk[5], chunk[6], products,
+            &store_config, delta,
         );
         output.extend_from_slice(&result);
     }
@@ -82,26 +82,26 @@ pub fn update_robots(robots: &[f32], products: &[f32], bounds: &[f32], delta_ms:
 }
 
 /// Compute a path from start to end, optionally preferring outer walkways
+/// Config format: [storeWidth, storeHeight, aisleCount, aisleSpacing, aisleWidth, startOffset, walkwayWidth, crossAisleBuffer, outerWalkwayOffset, orientation]
 #[wasm_bindgen]
 pub fn compute_path(
     start: &[f32],
     end: &[f32],
-    bounds: &[f32],
+    config: &[f32],
     prefer_outer_walkway: bool,
 ) -> Vec<f32> {
     if start.len() < 2 || end.len() < 2 {
         return Vec::new();
     }
-    let width = bounds.first().copied().unwrap_or(250.0);
-    let height = bounds.get(1).copied().unwrap_or(150.0);
+    let store_config = StoreConfig::from_buffer(config);
 
     let start_pt = (start[0], start[1]);
     let end_pt = (end[0], end[1]);
 
     let path = if prefer_outer_walkway {
-        compute_path_with_outer_walkway(start_pt, end_pt, width, height)
+        compute_path_with_outer_walkway(start_pt, end_pt, &store_config)
     } else {
-        find_path(start_pt, end_pt, width, height)
+        find_path(start_pt, end_pt, &store_config)
     };
 
     path.into_iter().flat_map(|(x, y)| vec![x, y]).collect()

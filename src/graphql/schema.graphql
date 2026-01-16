@@ -16,6 +16,16 @@ type SimulationConfig {
   pickupProductId: String
   dropAisle: Int
   dropProgress: Int
+  aisleCount: Int
+  aisleSpacing: Float
+  aisleWidth: Float
+  startOffset: Float
+  walkwayWidth: Float
+  crossAisleBuffer: Float
+  outerWalkwayOffset: Float
+  storeWidth: Float
+  storeHeight: Float
+  orientation: String
   updatedAt: String!
 }
 
@@ -32,6 +42,16 @@ input SaveSimulationInput {
   pickupProductId: String
   dropAisle: Int
   dropProgress: Int
+  aisleCount: Int
+  aisleSpacing: Float
+  aisleWidth: Float
+  startOffset: Float
+  walkwayWidth: Float
+  crossAisleBuffer: Float
+  outerWalkwayOffset: Float
+  storeWidth: Float
+  storeHeight: Float
+  orientation: String
   products: [ProductInput!]!
 }
 

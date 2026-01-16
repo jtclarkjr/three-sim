@@ -92,21 +92,21 @@ fn find_nearest_walkable(col: i32, row: i32, grid: &[Vec<bool>]) -> (i32, i32) {
     (col, row)
 }
 
-pub fn find_path(start: (f32, f32), end: (f32, f32), width: f32, height: f32) -> Vec<(f32, f32)> {
-    let grid = build_nav_grid(width, height);
+pub fn find_path(start: (f32, f32), end: (f32, f32), config: &StoreConfig) -> Vec<(f32, f32)> {
+    let grid = build_nav_grid(config);
     let max_col = grid.first().map(|r| r.len() as i32).unwrap_or(0) - 1;
     let max_row = grid.len() as i32 - 1;
     if max_col < 0 || max_row < 0 {
         return vec![start, end];
     }
 
-    let mut start_col = world_to_col(start.0, width);
-    let mut start_row = world_to_row(start.1, height);
+    let mut start_col = world_to_col(start.0, config.store_width);
+    let mut start_row = world_to_row(start.1, config.store_height);
     start_col = clamp(start_col as f32, 0.0, max_col as f32) as i32;
     start_row = clamp(start_row as f32, 0.0, max_row as f32) as i32;
 
-    let mut end_col = world_to_col(end.0, width);
-    let mut end_row = world_to_row(end.1, height);
+    let mut end_col = world_to_col(end.0, config.store_width);
+    let mut end_row = world_to_row(end.1, config.store_height);
     end_col = clamp(end_col as f32, 0.0, max_col as f32) as i32;
     end_row = clamp(end_row as f32, 0.0, max_row as f32) as i32;
 
@@ -133,10 +133,16 @@ pub fn find_path(start: (f32, f32), end: (f32, f32), width: f32, height: f32) ->
         if current.col == end_col && current.row == end_row {
             let mut path = Vec::new();
             let mut curr = (current.col, current.row);
-            path.push((cell_center_x(curr.0, width), cell_center_y(curr.1, height)));
+            path.push((
+                cell_center_x(curr.0, config.store_width),
+                cell_center_y(curr.1, config.store_height),
+            ));
             while let Some(prev) = came_from.get(&curr) {
                 curr = *prev;
-                path.push((cell_center_x(curr.0, width), cell_center_y(curr.1, height)));
+                path.push((
+                    cell_center_x(curr.0, config.store_width),
+                    cell_center_y(curr.1, config.store_height),
+                ));
             }
             path.reverse();
             return path;
@@ -168,18 +174,17 @@ pub fn find_path(start: (f32, f32), end: (f32, f32), width: f32, height: f32) ->
 pub fn compute_path_with_outer_walkway(
     start: (f32, f32),
     end: (f32, f32),
-    width: f32,
-    height: f32,
+    config: &StoreConfig,
 ) -> Vec<(f32, f32)> {
-    let top_y = height / 2.0 - OUTER_WALKWAY_OFFSET;
-    let bottom_y = -height / 2.0 + OUTER_WALKWAY_OFFSET;
+    let top_y = config.store_height / 2.0 - config.outer_walkway_offset;
+    let bottom_y = -config.store_height / 2.0 + config.outer_walkway_offset;
 
     let build_route = |anchor_y: f32| {
-        let leg1 = find_path(start, (start.0, anchor_y), width, height);
+        let leg1 = find_path(start, (start.0, anchor_y), config);
         let anchor_pt = *leg1.last().unwrap_or(&(start.0, anchor_y));
-        let leg2 = find_path(anchor_pt, (end.0, anchor_y), width, height);
+        let leg2 = find_path(anchor_pt, (end.0, anchor_y), config);
         let leg2_anchor = *leg2.last().unwrap_or(&(end.0, anchor_y));
-        let leg3 = find_path(leg2_anchor, end, width, height);
+        let leg3 = find_path(leg2_anchor, end, config);
         let mut stitched = Vec::new();
         stitched.extend(leg1);
         if !leg2.is_empty() {

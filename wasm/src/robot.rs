@@ -2,12 +2,12 @@ use crate::constants::*;
 use crate::geometry::*;
 use crate::grid::is_in_aisle_walkway;
 
-pub fn find_nearest_valid_position(x: f32, y: f32, width: f32, height: f32) -> (f32, f32) {
-    let mut nearest_aisle_x = -width / 2.0 + 20.0;
+pub fn find_nearest_valid_position(x: f32, y: f32, config: &StoreConfig) -> (f32, f32) {
+    let mut nearest_aisle_x = config.get_aisle_center(0);
     let mut min_dist = (x - nearest_aisle_x).abs();
 
-    for aisle in 1..NUM_AISLES {
-        let aisle_x = -width / 2.0 + 20.0 + (aisle as f32) * AISLE_SPACING;
+    for aisle in 1..config.aisle_count {
+        let aisle_x = config.get_aisle_center(aisle);
         let dist = (x - aisle_x).abs();
         if dist < min_dist {
             min_dist = dist;
@@ -15,28 +15,32 @@ pub fn find_nearest_valid_position(x: f32, y: f32, width: f32, height: f32) -> (
         }
     }
 
-    let clamped_y = clamp(y, -height / 2.0 + 10.0, height / 2.0 - 10.0);
+    let clamped_y = clamp(
+        y,
+        -config.store_height / 2.0 + 10.0,
+        config.store_height / 2.0 - 10.0,
+    );
     (nearest_aisle_x, clamped_y)
 }
 
-pub fn get_valid_destination(width: f32, height: f32) -> (f32, f32) {
+pub fn get_valid_destination(config: &StoreConfig) -> (f32, f32) {
     for _ in 0..50 {
         if random_f32() > 0.2 {
-            let aisle_num = (random_f32() * NUM_AISLES as f32).floor() as i32;
-            let aisle_x = -width / 2.0 + 20.0 + (aisle_num as f32) * AISLE_SPACING;
-            let y = random_f32() * (height - 30.0) - (height - 30.0) / 2.0;
+            let aisle_num = (random_f32() * config.aisle_count as f32).floor() as i32;
+            let aisle_x = config.get_aisle_center(aisle_num);
+            let y = random_f32() * (config.store_height - 30.0) - (config.store_height - 30.0) / 2.0;
             return (aisle_x, y);
         } else {
-            let x = random_f32() * width - width / 2.0;
-            let y = random_f32() * height - height / 2.0;
-            if is_in_aisle_walkway(x, y, width, height) {
+            let x = random_f32() * config.store_width - config.store_width / 2.0;
+            let y = random_f32() * config.store_height - config.store_height / 2.0;
+            if is_in_aisle_walkway(x, y, config) {
                 return (x, y);
             }
         }
     }
 
-    let aisle_num = (random_f32() * NUM_AISLES as f32).floor() as i32;
-    let aisle_x = -width / 2.0 + 20.0 + (aisle_num as f32) * AISLE_SPACING;
+    let aisle_num = (random_f32() * config.aisle_count as f32).floor() as i32;
+    let aisle_x = config.get_aisle_center(aisle_num);
     (aisle_x, 0.0)
 }
 
@@ -61,8 +65,7 @@ pub fn update_single_robot(
     speed: f32,
     last_move_ms: f32,
     products: &[f32],
-    width: f32,
-    height: f32,
+    config: &StoreConfig,
     delta: f32,
 ) -> [f32; 7] {
     let mut dest_x = dest_x;
@@ -71,7 +74,7 @@ pub fn update_single_robot(
     let mut last_move_ms = last_move_ms;
 
     if last_move_ms > STUCK_TIMEOUT {
-        let (nx, ny) = get_valid_destination(width, height);
+        let (nx, ny) = get_valid_destination(config);
         dest_x = nx;
         dest_y = ny;
         last_move_ms = 0.0;
@@ -82,7 +85,7 @@ pub fn update_single_robot(
     let mut distance = (dx * dx + dy * dy).sqrt();
 
     if distance < 2.0 {
-        let (nx, ny) = get_valid_destination(width, height);
+        let (nx, ny) = get_valid_destination(config);
         dest_x = nx;
         dest_y = ny;
         dx = dest_x - x;
@@ -105,19 +108,19 @@ pub fn update_single_robot(
     let mut new_x = x + move_x;
     let mut new_y = y + move_y;
 
-    if !is_in_aisle_walkway(x, y, width, height) {
-        let (valid_x, valid_y) = find_nearest_valid_position(x, y, width, height);
-        let (nx, ny) = get_valid_destination(width, height);
+    if !is_in_aisle_walkway(x, y, config) {
+        let (valid_x, valid_y) = find_nearest_valid_position(x, y, config);
+        let (nx, ny) = get_valid_destination(config);
         return [valid_x, valid_y, nx, ny, orientation, speed, 0.0];
     }
 
-    if !is_in_aisle_walkway(new_x, new_y, width, height) {
-        if is_in_aisle_walkway(new_x, y, width, height) {
+    if !is_in_aisle_walkway(new_x, new_y, config) {
+        if is_in_aisle_walkway(new_x, y, config) {
             new_y = y;
-        } else if is_in_aisle_walkway(x, new_y, width, height) {
+        } else if is_in_aisle_walkway(x, new_y, config) {
             new_x = x;
         } else {
-            let (nx, ny) = get_valid_destination(width, height);
+            let (nx, ny) = get_valid_destination(config);
             dest_x = nx;
             dest_y = ny;
             new_x = x;
@@ -149,11 +152,19 @@ pub fn update_single_robot(
         dest_x = x + reflected_x * bounce_distance;
         dest_y = y + reflected_y * bounce_distance;
 
-        dest_x = clamp(dest_x, -width / 2.0 + 10.0, width / 2.0 - 10.0);
-        dest_y = clamp(dest_y, -height / 2.0 + 10.0, height / 2.0 - 10.0);
+        dest_x = clamp(
+            dest_x,
+            -config.store_width / 2.0 + 10.0,
+            config.store_width / 2.0 - 10.0,
+        );
+        dest_y = clamp(
+            dest_y,
+            -config.store_height / 2.0 + 10.0,
+            config.store_height / 2.0 - 10.0,
+        );
 
-        if !is_in_aisle_walkway(dest_x, dest_y, width, height) {
-            let (nx, ny) = get_valid_destination(width, height);
+        if !is_in_aisle_walkway(dest_x, dest_y, config) {
+            let (nx, ny) = get_valid_destination(config);
             dest_x = nx;
             dest_y = ny;
         }
@@ -162,10 +173,10 @@ pub fn update_single_robot(
         new_x = px + normal_x * push_distance;
         new_y = py + normal_y * push_distance;
 
-        if !is_in_aisle_walkway(new_x, new_y, width, height) {
+        if !is_in_aisle_walkway(new_x, new_y, config) {
             new_x = x;
             new_y = y;
-            let (nx, ny) = get_valid_destination(width, height);
+            let (nx, ny) = get_valid_destination(config);
             dest_x = nx;
             dest_y = ny;
         }

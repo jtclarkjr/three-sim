@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { STORE_BOUNDS } from '@/components/store-map/mockData'
+import { aisleConfigToBuffer } from '@/components/store-map/mockData'
 import type {
+  AisleConfig,
   Product,
   Robot,
   RobotTask,
   RobotTaskPhase
 } from '@/components/store-map/types'
+import { DEFAULT_AISLE_CONFIG } from '@/components/store-map/types'
 import { loadWasm } from '@/wasm/loadWasm'
 
 const UPDATE_INTERVAL = 50
@@ -61,12 +63,18 @@ function computePath(
   wasmModule: Awaited<ReturnType<typeof loadWasm>>,
   robot: Robot,
   target: { x: number; y: number },
-  preferOuterWalkway: boolean
+  preferOuterWalkway: boolean,
+  config: AisleConfig
 ): { x: number; y: number }[] {
   const start = new Float32Array([robot.x, robot.y])
   const end = new Float32Array([target.x, target.y])
-  const bounds = new Float32Array([STORE_BOUNDS.width, STORE_BOUNDS.height])
-  const result = wasmModule.computePath(start, end, bounds, preferOuterWalkway)
+  const configBuffer = aisleConfigToBuffer(config)
+  const result = wasmModule.computePath(
+    start,
+    end,
+    configBuffer,
+    preferOuterWalkway
+  )
   const arr =
     result instanceof Float32Array ? result : new Float32Array(result ?? [])
   if (arr.length % 2 !== 0 || arr.length === 0) {
@@ -120,7 +128,8 @@ export function useRobotSimulation(
   initialRobots: Robot[],
   products: Product[],
   activeCommand?: RobotTask | null,
-  onCommandComplete?: (commandId: string) => void
+  onCommandComplete?: (commandId: string) => void,
+  aisleConfig: AisleConfig = DEFAULT_AISLE_CONFIG
 ) {
   const [robots, setRobots] = useState<Robot[]>(initialRobots)
   const [wasmModule, setWasmModule] = useState<Awaited<
@@ -180,7 +189,7 @@ export function useRobotSimulation(
                 existingTask.waypointsTarget !== currentTargetKey
 
               const plannedPath = shouldPlanPath
-                ? computePath(wasmModule, robot, target, true)
+                ? computePath(wasmModule, robot, target, true, aisleConfig)
                 : null
 
               const waypoints = shouldPlanPath
@@ -214,14 +223,11 @@ export function useRobotSimulation(
         if (autopilotRobots.length > 0) {
           const robotBuffer = flattenRobots(autopilotRobots)
           const productBuffer = flattenProducts(products)
-          const bounds = new Float32Array([
-            STORE_BOUNDS.width,
-            STORE_BOUNDS.height
-          ])
+          const configBuffer = aisleConfigToBuffer(aisleConfig)
           const result = wasmModule.updateRobots(
             robotBuffer,
             productBuffer,
-            bounds,
+            configBuffer,
             UPDATE_INTERVAL
           )
           if (result && result.length === robotBuffer.length) {
@@ -284,7 +290,8 @@ export function useRobotSimulation(
                 wasmModule,
                 robot,
                 robot.task.dropTarget,
-                true
+                true,
+                aisleConfig
               )
               const firstDropWaypoint = dropPath[0] ?? robot.task.dropTarget
               return {
@@ -322,7 +329,7 @@ export function useRobotSimulation(
     }, UPDATE_INTERVAL)
 
     return () => clearInterval(intervalId)
-  }, [activeCommand, onCommandComplete, products, wasmModule])
+  }, [activeCommand, onCommandComplete, products, wasmModule, aisleConfig])
 
   useEffect(() => {
     setRobots(initialRobots)

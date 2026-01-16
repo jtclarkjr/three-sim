@@ -44,6 +44,16 @@ export const resolvers = {
           pickupProductId?: string | null
           dropAisle?: number | null
           dropProgress?: number | null
+          aisleCount?: number | null
+          aisleSpacing?: number | null
+          aisleWidth?: number | null
+          startOffset?: number | null
+          walkwayWidth?: number | null
+          crossAisleBuffer?: number | null
+          outerWalkwayOffset?: number | null
+          storeWidth?: number | null
+          storeHeight?: number | null
+          orientation?: string | null
           products: Product[]
         }
       }
@@ -55,6 +65,16 @@ export const resolvers = {
         pickupProductId,
         dropAisle,
         dropProgress,
+        aisleCount,
+        aisleSpacing,
+        aisleWidth,
+        startOffset,
+        walkwayWidth,
+        crossAisleBuffer,
+        outerWalkwayOffset,
+        storeWidth,
+        storeHeight,
+        orientation,
         products: productList
       } = args.input
 
@@ -91,7 +111,17 @@ export const resolvers = {
                 trackedRobotId,
                 pickupProductId,
                 dropAisle,
-                dropProgress
+                dropProgress,
+                aisleCount,
+                aisleSpacing,
+                aisleWidth,
+                startOffset,
+                walkwayWidth,
+                crossAisleBuffer,
+                outerWalkwayOffset,
+                storeWidth,
+                storeHeight,
+                orientation
               })
               .where(eq(simulationConfig.id, 1))
           } else {
@@ -102,7 +132,17 @@ export const resolvers = {
               trackedRobotId,
               pickupProductId,
               dropAisle,
-              dropProgress
+              dropProgress,
+              aisleCount,
+              aisleSpacing,
+              aisleWidth,
+              startOffset,
+              walkwayWidth,
+              crossAisleBuffer,
+              outerWalkwayOffset,
+              storeWidth,
+              storeHeight,
+              orientation
             })
           }
 

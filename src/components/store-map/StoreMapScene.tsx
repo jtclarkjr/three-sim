@@ -2,10 +2,11 @@ import { OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { useEffect, useMemo } from 'react'
 import { useRobotSimulation } from '@/hooks/useRobotSimulation'
-import { generateProducts, generateRobots, STORE_BOUNDS } from './mockData'
+import { generateProducts, generateRobots } from './mockData'
 import { Products } from './Products'
 import { RobotMesh } from './RobotMesh'
-import type { Product, Robot, RobotTask } from './types'
+import type { AisleConfig, Product, Robot, RobotTask } from './types'
+import { DEFAULT_AISLE_CONFIG } from './types'
 
 interface StoreMapSceneProps {
   productCount?: number
@@ -16,6 +17,7 @@ interface StoreMapSceneProps {
   activeCommand?: RobotTask | null
   onCommandComplete?: (commandId: string) => void
   onTrackedRobotUpdate?: (robot: Robot | undefined) => void
+  aisleConfig?: AisleConfig
 }
 
 export const StoreMapScene = ({
@@ -26,21 +28,23 @@ export const StoreMapScene = ({
   products,
   activeCommand,
   onCommandComplete,
-  onTrackedRobotUpdate
+  onTrackedRobotUpdate,
+  aisleConfig = DEFAULT_AISLE_CONFIG
 }: StoreMapSceneProps) => {
   const productsToUse = useMemo(
-    () => products ?? generateProducts(productCount),
-    [productCount, products]
+    () => products ?? generateProducts(productCount, aisleConfig),
+    [productCount, products, aisleConfig]
   )
   const robotsToSimulate = useMemo(
-    () => initialRobots ?? generateRobots(robotCount),
-    [initialRobots, robotCount]
+    () => initialRobots ?? generateRobots(robotCount, aisleConfig),
+    [initialRobots, robotCount, aisleConfig]
   )
   const robots = useRobotSimulation(
     robotsToSimulate,
     productsToUse,
     activeCommand,
-    onCommandComplete
+    onCommandComplete,
+    aisleConfig
   )
   const trackedRobot = useMemo(
     () => robots.find((robot) => robot.id === trackedRobotId),
@@ -58,14 +62,30 @@ export const StoreMapScene = ({
     )
   }, [activeCommand, productsToUse])
 
+  const cameraDistance = useMemo(() => {
+    const maxDimension = Math.max(
+      aisleConfig.storeWidth,
+      aisleConfig.storeHeight
+    )
+    return maxDimension * 0.8
+  }, [aisleConfig.storeWidth, aisleConfig.storeHeight])
+
+  const maxCameraDistance = useMemo(() => {
+    const maxDimension = Math.max(
+      aisleConfig.storeWidth,
+      aisleConfig.storeHeight
+    )
+    return maxDimension * 2
+  }, [aisleConfig.storeWidth, aisleConfig.storeHeight])
+
   return (
     <div className="w-full h-screen">
       <Canvas
         camera={{
-          position: [0, 120, 80],
+          position: [0, cameraDistance, cameraDistance * 0.6],
           fov: 75,
           near: 0.1,
-          far: 1000
+          far: 2000
         }}
         shadows
         gl={{ antialias: true }}
@@ -80,10 +100,10 @@ export const StoreMapScene = ({
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
           shadow-camera-far={500}
-          shadow-camera-left={-STORE_BOUNDS.width}
-          shadow-camera-right={STORE_BOUNDS.width}
-          shadow-camera-top={STORE_BOUNDS.height}
-          shadow-camera-bottom={-STORE_BOUNDS.height}
+          shadow-camera-left={-aisleConfig.storeWidth}
+          shadow-camera-right={aisleConfig.storeWidth}
+          shadow-camera-top={aisleConfig.storeHeight}
+          shadow-camera-bottom={-aisleConfig.storeHeight}
         />
 
         <pointLight position={[0, 50, 0]} intensity={0.5} color="#ffffff" />
@@ -94,20 +114,10 @@ export const StoreMapScene = ({
           receiveShadow
         >
           <planeGeometry
-            args={[STORE_BOUNDS.width * 1.2, STORE_BOUNDS.height * 1.2]}
+            args={[aisleConfig.storeWidth * 1.2, aisleConfig.storeHeight * 1.2]}
           />
           <meshStandardMaterial color="#1a1a2e" roughness={0.8} />
         </mesh>
-
-        <gridHelper
-          args={[
-            Math.max(STORE_BOUNDS.width, STORE_BOUNDS.height) * 1.2,
-            40,
-            '#00d4ff',
-            '#003344'
-          ]}
-          position={[0, 0.01, 0]}
-        />
 
         <Products products={productsToUse} />
         {targetProduct && (
@@ -147,10 +157,12 @@ export const StoreMapScene = ({
         <OrbitControls
           enableDamping
           dampingFactor={0.05}
+          enablePan
           minDistance={20}
-          maxDistance={300}
+          maxDistance={maxCameraDistance}
           maxPolarAngle={Math.PI / 2.1}
           target={[0, 0, 0]}
+          panSpeed={1}
         />
       </Canvas>
     </div>

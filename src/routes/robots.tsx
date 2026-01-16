@@ -137,6 +137,17 @@ function RobotsMap() {
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<string | null>(null)
   const [advancedOpen, setAdvancedOpen] = useState(false)
+  const [layoutConfigOpen, setLayoutConfigOpen] = useState(false)
+  const [commandOpen, setCommandOpen] = useState(false)
+  const [lastSavedSnapshot, setLastSavedSnapshot] = useState(() => ({
+    productCount: loaderData.productCount,
+    robotCount: loaderData.robotCount,
+    trackedRobotId: loaderData.trackedRobotId,
+    pickupProductId: loaderData.pickupProductId ?? '',
+    dropAisle: loaderData.dropAisle ?? 1,
+    dropProgress: loaderData.dropProgress ?? 50,
+    aisleConfig: loaderData.aisleConfig
+  }))
   const productRangeId = useId()
   const robotRangeId = useId()
   const trackSelectId = useId()
@@ -235,6 +246,15 @@ function RobotsMap() {
       if (result.success) {
         setSaveStatus('Configuration saved successfully!')
         setIsPersisted(true)
+        setLastSavedSnapshot({
+          productCount,
+          robotCount,
+          trackedRobotId,
+          pickupProductId,
+          dropAisle,
+          dropProgress,
+          aisleConfig
+        })
       } else {
         setSaveStatus(`Save failed: ${result.message}`)
       }
@@ -329,6 +349,51 @@ function RobotsMap() {
 
     return commandStatus
   }, [activeCommand, commandStatus, trackedRobotState])
+
+  const hasUnsavedChanges = useMemo(() => {
+    const current = {
+      productCount,
+      robotCount,
+      trackedRobotId,
+      pickupProductId,
+      dropAisle,
+      dropProgress,
+      aisleConfig
+    }
+
+    if (current.productCount !== lastSavedSnapshot.productCount) return true
+    if (current.robotCount !== lastSavedSnapshot.robotCount) return true
+    if (current.trackedRobotId !== lastSavedSnapshot.trackedRobotId) return true
+    if (current.pickupProductId !== lastSavedSnapshot.pickupProductId) {
+      return true
+    }
+    if (current.dropAisle !== lastSavedSnapshot.dropAisle) return true
+    if (current.dropProgress !== lastSavedSnapshot.dropProgress) return true
+
+    const prevAisle = lastSavedSnapshot.aisleConfig
+    const nextAisle = current.aisleConfig
+    return (
+      prevAisle.count !== nextAisle.count ||
+      prevAisle.spacing !== nextAisle.spacing ||
+      prevAisle.width !== nextAisle.width ||
+      prevAisle.startOffset !== nextAisle.startOffset ||
+      prevAisle.walkwayWidth !== nextAisle.walkwayWidth ||
+      prevAisle.crossAisleBuffer !== nextAisle.crossAisleBuffer ||
+      prevAisle.outerWalkwayOffset !== nextAisle.outerWalkwayOffset ||
+      prevAisle.storeWidth !== nextAisle.storeWidth ||
+      prevAisle.storeHeight !== nextAisle.storeHeight ||
+      prevAisle.orientation !== nextAisle.orientation
+    )
+  }, [
+    aisleConfig,
+    dropAisle,
+    dropProgress,
+    lastSavedSnapshot,
+    pickupProductId,
+    productCount,
+    robotCount,
+    trackedRobotId
+  ])
 
   return (
     <div className="relative w-full h-screen bg-slate-900">
@@ -468,10 +533,19 @@ function RobotsMap() {
                 )}
               </div>
 
-              <div className="p-3 rounded-md bg-slate-900/40 border border-slate-700/60 space-y-3">
-                <div className="text-gray-200 font-semibold text-sm">
-                  Store Layout Configuration
-                </div>
+              <details
+                open={layoutConfigOpen}
+                onToggle={(e) =>
+                  setLayoutConfigOpen((e.target as HTMLDetailsElement).open)
+                }
+                className="p-3 rounded-md bg-slate-900/40 border border-slate-700/60 open:space-y-3"
+              >
+                <summary className="flex items-center justify-between cursor-pointer text-gray-200 font-semibold text-sm hover:text-cyan-300 transition-colors mb-0">
+                  <span>Store Layout Configuration</span>
+                  <span className="text-xs text-gray-400">
+                    {layoutConfigOpen ? 'Hide' : 'Show'}
+                  </span>
+                </summary>
                 <p className="text-xs text-gray-400">
                   Adjust aisle layout in real-time
                 </p>
@@ -615,19 +689,27 @@ function RobotsMap() {
                     </div>
                   </div>
                 </details>
-              </div>
+              </details>
 
-              <div className="p-3 rounded-md bg-slate-900/40 border border-slate-700/60 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-200 font-semibold text-sm">
-                    Command robot
-                  </span>
-                  {liveCommandStatus && (
+              <details
+                open={commandOpen}
+                onToggle={(e) =>
+                  setCommandOpen((e.target as HTMLDetailsElement).open)
+                }
+                className="p-3 rounded-md bg-slate-900/40 border border-slate-700/60 open:space-y-3"
+              >
+                <summary className="flex items-center justify-between cursor-pointer text-gray-200 font-semibold text-sm hover:text-cyan-300 transition-colors mb-0">
+                  <span>Command robot</span>
+                  {liveCommandStatus ? (
                     <span className="text-[11px] text-cyan-300">
                       {liveCommandStatus}
                     </span>
+                  ) : (
+                    <span className="text-xs text-gray-400">
+                      {commandOpen ? 'Hide' : 'Show'}
+                    </span>
                   )}
-                </div>
+                </summary>
                 <p className="text-xs text-gray-400">
                   Uses the tracked robot: {trackedRobotId ?? 'None selected'}.
                 </p>
@@ -721,7 +803,7 @@ function RobotsMap() {
                 >
                   Send pickup command
                 </button>
-              </div>
+              </details>
             </div>
 
             <div className="mt-4 pt-3 border-t border-gray-700 text-xs text-gray-300 space-y-1">
@@ -752,7 +834,7 @@ function RobotsMap() {
             <button
               type="button"
               onClick={handleSaveConfiguration}
-              disabled={isSaving}
+              disabled={isSaving || !hasUnsavedChanges}
               className="mt-3 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {isSaving ? 'Saving...' : 'Save Configuration'}

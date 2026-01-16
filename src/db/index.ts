@@ -1,6 +1,122 @@
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as schema from './schema'
 
+type SqliteStatement = {
+  all?: () => Array<{ name?: string }>
+  get?: () => { name?: string } | undefined
+  run?: () => unknown
+}
+
+type SqliteLike = {
+  exec?: (sql: string) => void
+  prepare?: (sql: string) => SqliteStatement
+  query?: (sql: string) => SqliteStatement
+  run?: (sql: string) => unknown
+}
+
+const ensureSchema = (sqlite: SqliteLike) => {
+  const runSql = (sql: string) => {
+    if (sqlite.run) {
+      sqlite.run(sql)
+      return
+    }
+
+    if (sqlite.exec) {
+      sqlite.exec(sql)
+      return
+    }
+
+    if (sqlite.prepare) {
+      sqlite.prepare(sql).run?.()
+      return
+    }
+
+    if (sqlite.query) {
+      sqlite.query(sql).run?.()
+      return
+    }
+
+    throw new Error('SQLite driver does not support executing SQL')
+  }
+
+  const getTableColumns = (tableName: string) => {
+    const pragma = `PRAGMA table_info(${tableName})`
+    let rows: Array<{ name?: string }> = []
+
+    if (sqlite.prepare) {
+      const stmt = sqlite.prepare(pragma)
+      rows = stmt.all?.() ?? (stmt.get ? [stmt.get()].filter(Boolean) : [])
+    } else if (sqlite.query) {
+      const stmt = sqlite.query(pragma)
+      rows = stmt.all?.() ?? []
+    }
+
+    return new Set(rows.map((row) => row.name).filter(Boolean))
+  }
+
+  runSql(
+    `CREATE TABLE IF NOT EXISTS simulation_config (
+      id integer PRIMARY KEY DEFAULT 1 NOT NULL,
+      product_count integer DEFAULT 20000 NOT NULL,
+      robot_count integer DEFAULT 30 NOT NULL,
+      tracked_robot_id text,
+      pickup_product_id text,
+      drop_aisle integer DEFAULT 1,
+      drop_progress integer DEFAULT 50,
+      aisle_count integer DEFAULT 6,
+      aisle_spacing real DEFAULT 40,
+      aisle_width real DEFAULT 6,
+      start_offset real DEFAULT 20,
+      walkway_width real DEFAULT 10,
+      cross_aisle_buffer real DEFAULT 4,
+      outer_walkway_offset real DEFAULT 12,
+      store_width real DEFAULT 250,
+      store_height real DEFAULT 150,
+      orientation text DEFAULT 'vertical',
+      updated_at integer DEFAULT (unixepoch()) NOT NULL
+    );`
+  )
+
+  runSql(
+    `CREATE TABLE IF NOT EXISTS products (
+      id text PRIMARY KEY NOT NULL,
+      x real NOT NULL,
+      y real NOT NULL,
+      created_at integer DEFAULT (unixepoch()) NOT NULL
+    );`
+  )
+
+  const existingColumns = getTableColumns('simulation_config')
+  const columnsToEnsure = [
+    'product_count integer DEFAULT 20000 NOT NULL',
+    'robot_count integer DEFAULT 30 NOT NULL',
+    'tracked_robot_id text',
+    'pickup_product_id text',
+    'drop_aisle integer DEFAULT 1',
+    'drop_progress integer DEFAULT 50',
+    'aisle_count integer DEFAULT 6',
+    'aisle_spacing real DEFAULT 40',
+    'aisle_width real DEFAULT 6',
+    'start_offset real DEFAULT 20',
+    'walkway_width real DEFAULT 10',
+    'cross_aisle_buffer real DEFAULT 4',
+    'outer_walkway_offset real DEFAULT 12',
+    'store_width real DEFAULT 250',
+    'store_height real DEFAULT 150',
+    "orientation text DEFAULT 'vertical'",
+    'updated_at integer DEFAULT (unixepoch()) NOT NULL'
+  ]
+
+  for (const columnDefinition of columnsToEnsure) {
+    const columnName = columnDefinition.split(' ')[0]
+    if (!existingColumns.has(columnName)) {
+      runSql(
+        `ALTER TABLE simulation_config ADD COLUMN ${columnDefinition};`
+      )
+    }
+  }
+}
+
 const dbPath = process.env.DATABASE_URL || 'sqlite.db'
 
 // Lazy initialize database with runtime detection
@@ -17,12 +133,14 @@ export const getDb = async (): Promise<DbInstance> => {
     const { Database } = await import('bun:sqlite')
     const { drizzle } = await import('drizzle-orm/bun-sqlite')
     const sqlite = new Database(dbPath)
+    ensureSchema(sqlite)
     _db = drizzle(sqlite, { schema })
   } else {
     // Use better-sqlite3 when running in Node.js (Vite dev server)
     const Database = (await import('better-sqlite3')).default
     const { drizzle } = await import('drizzle-orm/better-sqlite3')
     const sqlite = new Database(dbPath)
+    ensureSchema(sqlite)
     _db = drizzle(sqlite, { schema })
   }
 

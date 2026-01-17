@@ -57,4 +57,11 @@ impl StoreConfig {
             Orientation::Vertical => (x, y),
         }
     }
+
+    pub fn transform_orientation(&self, angle: f32) -> f32 {
+        match self.orientation {
+            Orientation::Horizontal => std::f32::consts::FRAC_PI_2 - angle,
+            Orientation::Vertical => angle,
+        }
+    }
 }

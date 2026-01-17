@@ -90,7 +90,8 @@ function computePath(
 function moveRobotToWaypoint(
   wasmModule: Awaited<ReturnType<typeof loadWasm>>,
   robot: Robot,
-  waypoint: { x: number; y: number }
+  waypoint: { x: number; y: number },
+  configBuffer: Float32Array
 ): Robot {
   const robotData = new Float32Array([
     robot.x,
@@ -104,7 +105,7 @@ function moveRobotToWaypoint(
     waypoint.y,
     UPDATE_INTERVAL
   ])
-  const result = wasmModule.moveRobotToWaypoint(robotData)
+  const result = wasmModule.moveRobotToWaypoint(robotData, configBuffer)
   if (result.length < 3) return robot
   return {
     ...robot,
@@ -117,10 +118,11 @@ function moveRobotToWaypoint(
 function hasArrivedAtWaypoint(
   wasmModule: Awaited<ReturnType<typeof loadWasm>>,
   robot: Robot,
-  waypoint: { x: number; y: number }
+  waypoint: { x: number; y: number },
+  configBuffer: Float32Array
 ): boolean {
   const positions = new Float32Array([robot.x, robot.y, waypoint.x, waypoint.y])
-  const result = wasmModule.hasArrivedAtWaypoint(positions)
+  const result = wasmModule.hasArrivedAtWaypoint(positions, configBuffer)
   return result === 1.0
 }
 
@@ -220,10 +222,11 @@ export function useRobotSimulation(
 
         let nextRobots = withCommands
 
+        const configBuffer = aisleConfigToBuffer(aisleConfig)
+
         if (autopilotRobots.length > 0) {
           const robotBuffer = flattenRobots(autopilotRobots)
           const productBuffer = flattenProducts(products)
-          const configBuffer = aisleConfigToBuffer(aisleConfig)
           const result = wasmModule.updateRobots(
             robotBuffer,
             productBuffer,
@@ -248,7 +251,7 @@ export function useRobotSimulation(
               ? waypoints[waypointIndex]
               : null) ??
               robot.task?.dropTarget ?? { x: robot.destX, y: robot.destY }
-            return moveRobotToWaypoint(wasmModule, robot, waypoint)
+            return moveRobotToWaypoint(wasmModule, robot, waypoint, configBuffer)
           })
         }
 
@@ -270,7 +273,7 @@ export function useRobotSimulation(
               ? taskWaypoints[taskWaypointIndex]
               : null) ?? target
 
-          if (hasArrivedAtWaypoint(wasmModule, robot, waypoint)) {
+          if (hasArrivedAtWaypoint(wasmModule, robot, waypoint, configBuffer)) {
             if (
               robot.task.waypoints &&
               (robot.task.waypointIndex ?? 0) < robot.task.waypoints.length - 1

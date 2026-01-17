@@ -20,6 +20,39 @@ interface StoreMapSceneProps {
   aisleConfig?: AisleConfig
 }
 
+const TargetMarker = ({
+  position,
+  color,
+  emissive
+}: {
+  position: [number, number, number]
+  color: string
+  emissive: string
+}) => (
+  <group position={position}>
+    <mesh position={[0, 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <ringGeometry args={[0.8, 1.2, 36]} />
+      <meshBasicMaterial color={color} transparent opacity={0.75} />
+    </mesh>
+    <mesh position={[0, 1.2, 0]}>
+      <cylinderGeometry args={[0.08, 0.08, 1.5, 12]} />
+      <meshStandardMaterial
+        color={color}
+        emissive={emissive}
+        emissiveIntensity={0.5}
+      />
+    </mesh>
+    <mesh position={[0, 2.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <coneGeometry args={[0.5, 0.9, 20]} />
+      <meshStandardMaterial
+        color={color}
+        emissive={emissive}
+        emissiveIntensity={0.35}
+      />
+    </mesh>
+  </group>
+)
+
 export const StoreMapScene = ({
   productCount = 100000,
   robotCount = 50,
@@ -61,6 +94,7 @@ export const StoreMapScene = ({
       null
     )
   }, [activeCommand, productsToUse])
+  const dropTarget = activeCommand?.dropTarget ?? null
 
   const cameraDistance = useMemo(() => {
     const maxDimension = Math.max(
@@ -121,28 +155,18 @@ export const StoreMapScene = ({
 
         <Products products={productsToUse} />
         {targetProduct && (
-          <group position={[targetProduct.x, 0, targetProduct.y]}>
-            <mesh position={[0, 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-              <ringGeometry args={[0.8, 1.2, 36]} />
-              <meshBasicMaterial color="#ef4444" transparent opacity={0.75} />
-            </mesh>
-            <mesh position={[0, 1.2, 0]}>
-              <cylinderGeometry args={[0.08, 0.08, 1.5, 12]} />
-              <meshStandardMaterial
-                color="#ef4444"
-                emissive="#b91c1c"
-                emissiveIntensity={0.5}
-              />
-            </mesh>
-            <mesh position={[0, 2.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-              <coneGeometry args={[0.5, 0.9, 20]} />
-              <meshStandardMaterial
-                color="#ef4444"
-                emissive="#f87171"
-                emissiveIntensity={0.35}
-              />
-            </mesh>
-          </group>
+          <TargetMarker
+            position={[targetProduct.x, 0, targetProduct.y]}
+            color="#22c55e"
+            emissive="#16a34a"
+          />
+        )}
+        {dropTarget && (
+          <TargetMarker
+            position={[dropTarget.x, 0, dropTarget.y]}
+            color="#ef4444"
+            emissive="#b91c1c"
+          />
         )}
 
         {robots.map((robot) => (

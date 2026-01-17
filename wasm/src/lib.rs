@@ -69,13 +69,48 @@ pub fn update_robots(robots: &[f32], products: &[f32], config: &[f32], delta_ms:
         UPDATE_INTERVAL_DEFAULT
     };
     let mut output: Vec<f32> = Vec::with_capacity(robots.len());
+    let transformed_products = if matches!(store_config.orientation, Orientation::Horizontal) {
+        let mut out = Vec::with_capacity(products.len());
+        for chunk in products.chunks_exact(2) {
+            let (x, y) = store_config.transform_coords(chunk[0], chunk[1]);
+            out.push(x);
+            out.push(y);
+        }
+        Some(out)
+    } else {
+        None
+    };
+    let products_ref = transformed_products
+        .as_deref()
+        .unwrap_or(products);
 
     for chunk in robots.chunks_exact(7) {
+        let (x, y) = store_config.transform_coords(chunk[0], chunk[1]);
+        let (dest_x, dest_y) = store_config.transform_coords(chunk[2], chunk[3]);
+        let orientation = store_config.transform_orientation(chunk[4]);
         let result = update_single_robot(
-            chunk[0], chunk[1], chunk[2], chunk[3], chunk[4], chunk[5], chunk[6], products,
+            x,
+            y,
+            dest_x,
+            dest_y,
+            orientation,
+            chunk[5],
+            chunk[6],
+            products_ref,
             &store_config, delta,
         );
-        output.extend_from_slice(&result);
+        let (out_x, out_y) = store_config.transform_coords(result[0], result[1]);
+        let (out_dest_x, out_dest_y) = store_config.transform_coords(result[2], result[3]);
+        let out_orientation = store_config.transform_orientation(result[4]);
+        output.extend_from_slice(&[
+            out_x,
+            out_y,
+            out_dest_x,
+            out_dest_y,
+            out_orientation,
+            result[5],
+            result[6],
+        ]);
     }
 
     output
@@ -95,8 +130,8 @@ pub fn compute_path(
     }
     let store_config = StoreConfig::from_buffer(config);
 
-    let start_pt = (start[0], start[1]);
-    let end_pt = (end[0], end[1]);
+    let start_pt = store_config.transform_coords(start[0], start[1]);
+    let end_pt = store_config.transform_coords(end[0], end[1]);
 
     let path = if prefer_outer_walkway {
         compute_path_with_outer_walkway(start_pt, end_pt, &store_config)
@@ -104,41 +139,71 @@ pub fn compute_path(
         find_path(start_pt, end_pt, &store_config)
     };
 
-    path.into_iter().flat_map(|(x, y)| vec![x, y]).collect()
+    let mut finalized = path;
+    if let Some(last) = finalized.last() {
+        let dx = last.0 - end_pt.0;
+        let dy = last.1 - end_pt.1;
+        if dx * dx + dy * dy > 0.25 {
+            finalized.push(end_pt);
+        }
+    } else {
+        finalized.push(end_pt);
+    }
+
+    finalized
+        .into_iter()
+        .flat_map(|(x, y)| {
+            let (tx, ty) = store_config.transform_coords(x, y);
+            vec![tx, ty]
+        })
+        .collect()
 }
 
 /// Move a single robot towards a target waypoint
 /// Input: [x, y, destX, destY, orientation, speed, lastMoveTime, waypointX, waypointY, deltaMs]
+/// Config format: [storeWidth, storeHeight, aisleCount, aisleSpacing, aisleWidth, startOffset, walkwayWidth, crossAisleBuffer, outerWalkwayOffset, orientation]
 /// Output: [newX, newY, orientation]
 #[wasm_bindgen]
-pub fn move_robot_to_waypoint(robot_data: &[f32]) -> Vec<f32> {
+pub fn move_robot_to_waypoint(robot_data: &[f32], config: &[f32]) -> Vec<f32> {
     if robot_data.len() < 10 {
         return Vec::new();
     }
 
+    let store_config = StoreConfig::from_buffer(config);
+    let (x, y) = store_config.transform_coords(robot_data[0], robot_data[1]);
+    let orientation = store_config.transform_orientation(robot_data[4]);
+    let (waypoint_x, waypoint_y) =
+        store_config.transform_coords(robot_data[7], robot_data[8]);
     let result = move_to_waypoint(
-        robot_data[0],
-        robot_data[1],
-        robot_data[4],
+        x,
+        y,
+        orientation,
         robot_data[5],
-        robot_data[7],
-        robot_data[8],
+        waypoint_x,
+        waypoint_y,
         robot_data[9],
     );
 
-    vec![result[0], result[1], result[2]]
+    let (out_x, out_y) = store_config.transform_coords(result[0], result[1]);
+    let out_orientation = store_config.transform_orientation(result[2]);
+    vec![out_x, out_y, out_orientation]
 }
 
 /// Check if a robot has arrived at its waypoint
 /// Input: [robotX, robotY, waypointX, waypointY]
+/// Config format: [storeWidth, storeHeight, aisleCount, aisleSpacing, aisleWidth, startOffset, walkwayWidth, crossAisleBuffer, outerWalkwayOffset, orientation]
 /// Output: 1.0 if arrived, 0.0 if not
 #[wasm_bindgen]
-pub fn has_arrived_at_waypoint(positions: &[f32]) -> f32 {
+pub fn has_arrived_at_waypoint(positions: &[f32], config: &[f32]) -> f32 {
     if positions.len() < 4 {
         return 0.0;
     }
 
-    if check_arrival(positions[0], positions[1], positions[2], positions[3]) {
+    let store_config = StoreConfig::from_buffer(config);
+    let (robot_x, robot_y) = store_config.transform_coords(positions[0], positions[1]);
+    let (waypoint_x, waypoint_y) = store_config.transform_coords(positions[2], positions[3]);
+
+    if check_arrival(robot_x, robot_y, waypoint_x, waypoint_y) {
         1.0
     } else {
         0.0

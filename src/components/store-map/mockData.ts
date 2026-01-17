@@ -109,6 +109,9 @@ export const generateProducts = (
   return products
 }
 
+export const MIN_ROBOT_SPEED = 2
+export const MAX_ROBOT_SPEED = 5
+
 export const generateRobots = (
   count: number,
   config: AisleConfig = DEFAULT_AISLE_CONFIG
@@ -162,7 +165,9 @@ export const generateRobots = (
       x: pos.x,
       y: pos.y,
       orientation: Math.random() * Math.PI * 2,
-      speed: 2 + Math.random() * 3,
+      speed:
+        MIN_ROBOT_SPEED +
+        Math.random() * (MAX_ROBOT_SPEED - MIN_ROBOT_SPEED),
       destX: destPos.x,
       destY: destPos.y
     })

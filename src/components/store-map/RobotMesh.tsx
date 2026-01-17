@@ -76,7 +76,7 @@ export const RobotMesh = ({
 
       <VariantMesh />
       {isCarrying && (
-        <mesh position={[0, 2.9, 0]} castShadow>
+        <mesh position={[0, 2.35, 1.15]} castShadow>
           <boxGeometry args={[0.8, 0.35, 0.8]} />
           <meshStandardMaterial
             color="#f59e0b"

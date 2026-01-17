@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { aisleConfigToBuffer } from '@/components/store-map/mockData'
+import {
+  MAX_ROBOT_SPEED,
+  aisleConfigToBuffer,
+  getAisleCenterCoord,
+  transformPosition
+} from '@/components/store-map/mockData'
 import type {
   AisleConfig,
   Product,
@@ -11,6 +16,17 @@ import { DEFAULT_AISLE_CONFIG } from '@/components/store-map/types'
 import { loadWasm } from '@/wasm/loadWasm'
 
 const UPDATE_INTERVAL = 50
+const IDLE_MARGIN = 15
+
+function getIdleDestination(config: AisleConfig) {
+  const aisleIndex = Math.floor(Math.random() * config.count)
+  const x = getAisleCenterCoord(aisleIndex, config)
+  const y =
+    -config.storeHeight / 2 +
+    IDLE_MARGIN +
+    Math.random() * (config.storeHeight - IDLE_MARGIN * 2)
+  return transformPosition(x, y, config.orientation)
+}
 
 function flattenRobots(robots: Robot[]) {
   const data = new Float32Array(robots.length * 7)
@@ -91,7 +107,8 @@ function moveRobotToWaypoint(
   wasmModule: Awaited<ReturnType<typeof loadWasm>>,
   robot: Robot,
   waypoint: { x: number; y: number },
-  configBuffer: Float32Array
+  configBuffer: Float32Array,
+  speedOverride?: number
 ): Robot {
   const robotData = new Float32Array([
     robot.x,
@@ -99,7 +116,7 @@ function moveRobotToWaypoint(
     robot.destX,
     robot.destY,
     robot.orientation,
-    robot.speed,
+    speedOverride ?? robot.speed,
     robot.lastMoveTime ?? 0,
     waypoint.x,
     waypoint.y,
@@ -251,7 +268,13 @@ export function useRobotSimulation(
               ? waypoints[waypointIndex]
               : null) ??
               robot.task?.dropTarget ?? { x: robot.destX, y: robot.destY }
-            return moveRobotToWaypoint(wasmModule, robot, waypoint, configBuffer)
+            return moveRobotToWaypoint(
+              wasmModule,
+              robot,
+              waypoint,
+              configBuffer,
+              MAX_ROBOT_SPEED
+            )
           })
         }
 
@@ -314,10 +337,14 @@ export function useRobotSimulation(
 
             if (robot.task.phase === 'toDropoff') {
               onCommandComplete?.(robot.task.id)
+              const idleDestination = getIdleDestination(aisleConfig)
               return {
                 ...robot,
                 carryingProductId: undefined,
-                task: undefined
+                task: undefined,
+                destX: idleDestination.x,
+                destY: idleDestination.y,
+                lastMoveTime: 0
               }
             }
           }

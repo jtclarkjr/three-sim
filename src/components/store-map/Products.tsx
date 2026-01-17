@@ -29,7 +29,11 @@ export const Products = ({ products }: ProductsProps) => {
   }, [products])
 
   return (
-    <instancedMesh ref={meshRef} args={[undefined, undefined, products.length]}>
+    <instancedMesh
+      ref={meshRef}
+      args={[undefined, undefined, products.length]}
+      frustumCulled={false}
+    >
       <boxGeometry args={[0.5, 1.2, 0.5]} />
       <meshStandardMaterial color="#ffa500" roughness={0.6} />
     </instancedMesh>

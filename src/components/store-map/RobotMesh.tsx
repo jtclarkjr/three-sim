@@ -23,6 +23,7 @@ export const RobotMesh = ({
   // Reuse vectors to avoid allocations in the render loop
   const worldPosition = useRef(new Vector3()).current
   const [isNearCamera, setIsNearCamera] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
   const isCarrying = Boolean(robot.carryingProductId)
 
   useFrame(({ camera }) => {
@@ -51,11 +52,16 @@ export const RobotMesh = ({
     }
   }, [robot.variant])
 
-  const shouldShowTextLabel = isNearCamera && (showLabel || isTracked)
+  const shouldShowTextLabel =
+    isHovered && isNearCamera && (showLabel || isTracked)
   const shouldShowIndicator = !shouldShowTextLabel && (showLabel || isTracked)
 
   return (
-    <group ref={groupRef}>
+    <group
+      ref={groupRef}
+      onPointerOver={() => setIsHovered(true)}
+      onPointerOut={() => setIsHovered(false)}
+    >
       {isTracked && (
         <>
           <mesh
@@ -105,6 +111,7 @@ export const RobotMesh = ({
             color: '#e0f2fe',
             fontSize: '12px',
             fontWeight: 700,
+            pointerEvents: 'none',
             background: isTracked
               ? 'rgba(8,47,73,0.85)'
               : 'rgba(15,23,42,0.65)',

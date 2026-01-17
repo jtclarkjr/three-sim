@@ -1,6 +1,9 @@
 import { OrbitControls } from '@react-three/drei'
-import { Canvas } from '@react-three/fiber'
-import { useEffect, useMemo } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import type { RefObject } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
+import { Vector3 } from 'three'
+import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
 import { useRobotSimulation } from '@/hooks/useRobotSimulation'
 import { generateProducts, generateRobots } from './mockData'
 import { Products } from './Products'
@@ -18,6 +21,7 @@ interface StoreMapSceneProps {
   onCommandComplete?: (commandId: string) => void
   onTrackedRobotUpdate?: (robot: Robot | undefined) => void
   aisleConfig?: AisleConfig
+  followTrackedRobot?: boolean
 }
 
 const TargetMarker = ({
@@ -53,6 +57,76 @@ const TargetMarker = ({
   </group>
 )
 
+const FollowCamera = ({
+  enabled,
+  target,
+  controlsRef,
+  followOffset
+}: {
+  enabled: boolean
+  target?: Robot | null
+  controlsRef: RefObject<OrbitControlsType>
+  followOffset: Vector3
+}) => {
+  const { camera } = useThree()
+  const targetPos = useRef(new Vector3())
+  const desiredPos = useRef(new Vector3())
+  const offset = useRef(new Vector3())
+  const hasOffset = useRef(false)
+  const enabledRef = useRef(enabled)
+  const targetRef = useRef<Robot | null>(null)
+
+  useEffect(() => {
+    enabledRef.current = enabled
+  }, [enabled])
+
+  useEffect(() => {
+    targetRef.current = target ?? null
+  }, [target])
+
+  useEffect(() => {
+    hasOffset.current = false
+    if (!enabled || !target) return
+    targetPos.current.set(target.x, 0, target.y)
+    offset.current.copy(followOffset)
+    hasOffset.current = true
+    desiredPos.current.copy(targetPos.current).add(offset.current)
+    camera.position.copy(desiredPos.current)
+    controlsRef.current?.target.copy(targetPos.current)
+    controlsRef.current?.update()
+  }, [camera, enabled, followOffset, target?.id])
+
+  useEffect(() => {
+    const controls = controlsRef.current
+    if (!controls) return
+    const handleChange = () => {
+      if (!enabledRef.current || !targetRef.current) return
+      targetPos.current.set(targetRef.current.x, 0, targetRef.current.y)
+      offset.current.copy(camera.position).sub(targetPos.current)
+      hasOffset.current = true
+    }
+    controls.addEventListener('change', handleChange)
+    return () => {
+      controls.removeEventListener('change', handleChange)
+    }
+  }, [camera, controlsRef])
+
+  useFrame(() => {
+    if (!enabled || !target || !controlsRef.current) return
+    targetPos.current.set(target.x, 0, target.y)
+    if (!hasOffset.current) {
+      offset.current.copy(camera.position).sub(targetPos.current)
+      hasOffset.current = true
+    }
+    desiredPos.current.copy(targetPos.current).add(offset.current)
+    camera.position.lerp(desiredPos.current, 0.1)
+    controlsRef.current.target.lerp(targetPos.current, 0.2)
+    controlsRef.current.update()
+  })
+
+  return null
+}
+
 export const StoreMapScene = ({
   productCount = 100000,
   robotCount = 50,
@@ -62,7 +136,8 @@ export const StoreMapScene = ({
   activeCommand,
   onCommandComplete,
   onTrackedRobotUpdate,
-  aisleConfig = DEFAULT_AISLE_CONFIG
+  aisleConfig = DEFAULT_AISLE_CONFIG,
+  followTrackedRobot = false
 }: StoreMapSceneProps) => {
   const productsToUse = useMemo(
     () => products ?? generateProducts(productCount, aisleConfig),
@@ -111,6 +186,14 @@ export const StoreMapScene = ({
     )
     return maxDimension * 2
   }, [aisleConfig.storeWidth, aisleConfig.storeHeight])
+  const followOffset = useMemo(() => {
+    const maxDimension = Math.max(
+      aisleConfig.storeWidth,
+      aisleConfig.storeHeight
+    )
+    return new Vector3(0, maxDimension * 0.22, maxDimension * 0.28)
+  }, [aisleConfig.storeWidth, aisleConfig.storeHeight])
+  const orbitControlsRef = useRef<OrbitControlsType>(null)
 
   return (
     <div className="w-full h-screen">
@@ -178,7 +261,14 @@ export const StoreMapScene = ({
           />
         ))}
 
+        <FollowCamera
+          enabled={followTrackedRobot}
+          target={trackedRobot}
+          controlsRef={orbitControlsRef}
+          followOffset={followOffset}
+        />
         <OrbitControls
+          ref={orbitControlsRef}
           enableDamping
           dampingFactor={0.05}
           enablePan

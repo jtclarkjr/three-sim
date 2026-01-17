@@ -3,7 +3,8 @@ import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import {
   generateProducts,
   generateRobots,
-  getAisleCenterCoord
+  getAisleCenterCoord,
+  transformPosition
 } from '@/components/store-map/mockData'
 import { StoreMapScene } from '@/components/store-map/StoreMapScene'
 import type {
@@ -113,6 +114,7 @@ function RobotsMap() {
   const [trackedRobotId, setTrackedRobotId] = useState<string | null>(
     loaderData.trackedRobotId
   )
+  const [followTrackedRobot, setFollowTrackedRobot] = useState(false)
   const [sampleMagnitude, setSampleMagnitude] = useState<string | null>(null)
   const [controlsOpen, setControlsOpen] = useState(true)
   const [aisleConfig, setAisleConfig] = useState<AisleConfig>(
@@ -151,7 +153,9 @@ function RobotsMap() {
   const productRangeId = useId()
   const robotRangeId = useId()
   const trackSelectId = useId()
+  const followRobotId = useId()
   const pickupSelectId = useId()
+  const pickupListId = useId()
   const dropAisleId = useId()
   const dropPosId = useId()
   const aisleCountId = useId()
@@ -164,6 +168,21 @@ function RobotsMap() {
     () => Array.from({ length: aisleConfig.count }, (_, idx) => idx + 1),
     [aisleConfig.count]
   )
+  const pickupSuggestions = useMemo(() => {
+    if (!products.length) return []
+    const maxSuggestions = 200
+    const trimmed = pickupProductId.trim()
+    const match = trimmed.match(/^product-(\d+)/i)
+    if (match) {
+      const index = Number(match[1])
+      if (!Number.isNaN(index)) {
+        const start = Math.max(0, index - Math.floor(maxSuggestions / 2))
+        const end = Math.min(products.length, start + maxSuggestions)
+        return products.slice(start, end)
+      }
+    }
+    return products.slice(0, Math.min(products.length, maxSuggestions))
+  }, [pickupProductId, products])
 
   useEffect(() => {
     if (!wasmReady || !computeMagnitudes) return
@@ -171,6 +190,12 @@ function RobotsMap() {
     const result = computeMagnitudes(demo)
     setSampleMagnitude(result[0]?.toFixed(2) ?? null)
   }, [computeMagnitudes, wasmReady])
+
+  useEffect(() => {
+    if (!trackedRobotId) {
+      setFollowTrackedRobot(false)
+    }
+  }, [trackedRobotId])
 
   const updateAisleConfig = useCallback((updates: Partial<AisleConfig>) => {
     setAisleConfig((prev) => {
@@ -284,7 +309,7 @@ function RobotsMap() {
     const x = getAisleCenterCoord(clampedAisle - 1, aisleConfig)
     const y =
       -aisleConfig.storeHeight / 2 + 15 + ratio * (aisleConfig.storeHeight - 30)
-    return { x, y }
+    return transformPosition(x, y, aisleConfig.orientation)
   }
 
   const handleSendCommand = () => {
@@ -516,6 +541,22 @@ function RobotsMap() {
                   Tracked robots are highlighted and labeled even in crowded
                   scenes.
                 </p>
+                <label
+                  htmlFor={followRobotId}
+                  className="mt-2 flex items-center gap-2 text-xs text-gray-300"
+                >
+                  <input
+                    id={followRobotId}
+                    type="checkbox"
+                    checked={followTrackedRobot}
+                    onChange={(event) =>
+                      setFollowTrackedRobot(event.target.checked)
+                    }
+                    disabled={!trackedRobotId}
+                    className="h-3 w-3 rounded border-slate-600 bg-slate-900/60 text-cyan-400 focus:ring-cyan-500 disabled:opacity-50"
+                  />
+                  Follow tracked robot
+                </label>
                 {trackedRobotState && (
                   <div className="mt-2 p-2 rounded bg-slate-950/60 border border-slate-700/40">
                     <div className="flex items-center justify-between text-xs">
@@ -724,6 +765,7 @@ function RobotsMap() {
                     <input
                       id={pickupSelectId}
                       type="text"
+                      list={pickupListId}
                       value={pickupProductId}
                       onChange={(event) =>
                         setPickupProductId(event.target.value)
@@ -744,6 +786,11 @@ function RobotsMap() {
                       Random
                     </button>
                   </div>
+                  <datalist id={pickupListId}>
+                    {pickupSuggestions.map((product) => (
+                      <option key={product.id} value={product.id} />
+                    ))}
+                  </datalist>
                   <p className="text-[11px] text-gray-500 mt-1">
                     Total products: {products.length.toLocaleString()}. Enter
                     any product ID.
@@ -868,6 +915,7 @@ function RobotsMap() {
         robotCount={robotCount}
         initialRobots={initialRobots}
         trackedRobotId={trackedRobotId}
+        followTrackedRobot={followTrackedRobot}
         products={products}
         activeCommand={activeCommand}
         onCommandComplete={handleCommandComplete}

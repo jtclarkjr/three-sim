@@ -95,15 +95,15 @@ export const resolvers = {
       try {
         const { db, products, simulationConfig, eq } = await getDb()
 
-        await db.transaction(async (tx) => {
-          const existingConfig = await tx
+        await db.transaction((tx) => {
+          const existingConfig = tx
             .select()
             .from(simulationConfig)
             .where(eq(simulationConfig.id, 1))
             .limit(1)
 
           if (existingConfig.length > 0) {
-            await tx
+            tx
               .update(simulationConfig)
               .set({
                 productCount,
@@ -125,7 +125,7 @@ export const resolvers = {
               })
               .where(eq(simulationConfig.id, 1))
           } else {
-            await tx.insert(simulationConfig).values({
+            tx.insert(simulationConfig).values({
               id: 1,
               productCount,
               robotCount,
@@ -146,12 +146,12 @@ export const resolvers = {
             })
           }
 
-          await tx.delete(products)
+          tx.delete(products)
 
           const CHUNK_SIZE = 100
           for (let i = 0; i < productList.length; i += CHUNK_SIZE) {
             const chunk = productList.slice(i, i + CHUNK_SIZE)
-            await tx.insert(products).values(
+            tx.insert(products).values(
               chunk.map((p) => ({
                 id: p.id,
                 x: p.x,
@@ -184,9 +184,9 @@ export const resolvers = {
       try {
         const { db, products, simulationConfig } = await getDb()
 
-        await db.transaction(async (tx) => {
-          await tx.delete(products)
-          await tx.delete(simulationConfig)
+        await db.transaction((tx) => {
+          tx.delete(products)
+          tx.delete(simulationConfig)
         })
 
         return {

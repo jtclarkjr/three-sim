@@ -363,7 +363,7 @@ function RobotsMap() {
     if (!task) return commandStatus
 
     if (task.phase === 'toProduct') {
-      return `Heading to product ${task.productId}...`
+      return `Heading to ${task.productId}...`
     }
 
     if (task.phase === 'toDropoff') {

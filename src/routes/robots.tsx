@@ -853,23 +853,6 @@ function RobotsMap() {
               </details>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-gray-700 text-xs text-gray-300 space-y-1">
-              <div className="flex items-center justify-between">
-                <span>Rust/Wasm compute:</span>
-                <span className="font-semibold">
-                  {wasmReady ? 'Ready' : 'Loading...'}
-                </span>
-              </div>
-              <div className="text-gray-400">
-                Magnitude (3,4,0):{' '}
-                <span className="text-cyan-300">{sampleMagnitude ?? '—'}</span>
-              </div>
-            </div>
-
-            <div className="mt-3 pt-3 border-t border-gray-700 text-xs text-gray-400">
-              <p>Use mouse to pan, zoom, and rotate the view</p>
-            </div>
-
             <button
               type="button"
               onClick={handleReset}

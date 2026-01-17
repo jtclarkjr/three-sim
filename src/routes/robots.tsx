@@ -306,7 +306,9 @@ function RobotsMap() {
   const computeDropTarget = (aisleNumber: number, positionPercent: number) => {
     const clampedAisle = Math.min(Math.max(aisleNumber, 1), aisleConfig.count)
     const ratio = Math.min(Math.max(positionPercent, 0), 100) / 100
-    const x = getAisleCenterCoord(clampedAisle - 1, aisleConfig)
+    const aisleCenter = getAisleCenterCoord(clampedAisle - 1, aisleConfig)
+    // Place drop target on the outer shelf edge of the aisle (where products are)
+    const x = aisleCenter + aisleConfig.width / 2
     const y =
       -aisleConfig.storeHeight / 2 + 15 + ratio * (aisleConfig.storeHeight - 30)
     return transformPosition(x, y, aisleConfig.orientation)

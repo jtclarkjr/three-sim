@@ -184,9 +184,9 @@ export const resolvers = {
       try {
         const { db, products, simulationConfig } = await getDb()
 
-        await db.transaction((tx) => {
-          tx.delete(products)
-          tx.delete(simulationConfig)
+        await db.transaction(async (tx) => {
+          await tx.delete(products)
+          await tx.delete(simulationConfig)
         })
 
         return {

@@ -26,7 +26,6 @@ import {
   resetSimulation,
   saveSimulation
 } from '@/graphql/client'
-import { useWasmCompute } from '@/hooks/useWasmCompute'
 
 type LoaderData = {
   productCount: number
@@ -113,7 +112,6 @@ function RobotsMap() {
     loaderData.trackedRobotId
   )
   const [followTrackedRobot, setFollowTrackedRobot] = useState(false)
-  const [sampleMagnitude, setSampleMagnitude] = useState<string | null>(null)
   const [controlsOpen, setControlsOpen] = useState(true)
   const [rowConfig, setRowConfig] = useState<RowConfig>(loaderData.rowConfig)
   const [layoutSeed, setLayoutSeed] = useState(0)
@@ -159,7 +157,6 @@ function RobotsMap() {
   const rowThicknessId = useId()
   const storeWidthId = useId()
   const storeHeightId = useId()
-  const { ready: wasmReady, computeMagnitudes } = useWasmCompute()
   const rowOptions = useMemo(
     () => Array.from({ length: rowConfig.count }, (_, idx) => idx + 1),
     [rowConfig.count]
@@ -179,13 +176,6 @@ function RobotsMap() {
     }
     return products.slice(0, Math.min(products.length, maxSuggestions))
   }, [pickupProductId, products])
-
-  useEffect(() => {
-    if (!wasmReady || !computeMagnitudes) return
-    const demo = new Float32Array([3, 4, 0]) // length should be 5
-    const result = computeMagnitudes(demo)
-    setSampleMagnitude(result[0]?.toFixed(2) ?? null)
-  }, [computeMagnitudes, wasmReady])
 
   useEffect(() => {
     if (!trackedRobotId) {

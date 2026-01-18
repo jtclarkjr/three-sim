@@ -22,6 +22,11 @@ export type WasmApi = {
     robotData: Float32Array,
     config: Float32Array
   ) => Float32Array | number[]
+  moveRobotToWaypointWithProducts?: (
+    robotData: Float32Array,
+    products: Float32Array,
+    config: Float32Array
+  ) => Float32Array | number[]
   hasArrivedAtWaypoint: (positions: Float32Array, config: Float32Array) => number
 }
 
@@ -39,6 +44,7 @@ export async function loadWasm(): Promise<WasmApi> {
           compute_path: WasmApi['computePath']
           update_robots: WasmApi['updateRobots']
           move_robot_to_waypoint: WasmApi['moveRobotToWaypoint']
+          move_robot_to_waypoint_with_products?: WasmApi['moveRobotToWaypointWithProducts']
           has_arrived_at_waypoint: WasmApi['hasArrivedAtWaypoint']
         }
 
@@ -53,6 +59,8 @@ export async function loadWasm(): Promise<WasmApi> {
           computePath: wasmMod.compute_path,
           updateRobots: wasmMod.update_robots,
           moveRobotToWaypoint: wasmMod.move_robot_to_waypoint,
+          moveRobotToWaypointWithProducts:
+            wasmMod.move_robot_to_waypoint_with_products,
           hasArrivedAtWaypoint: wasmMod.has_arrived_at_waypoint
         }
       })
@@ -66,6 +74,7 @@ export async function loadWasm(): Promise<WasmApi> {
           computePath: WasmApi['computePath']
           updateRobots: WasmApi['updateRobots']
           moveRobotToWaypoint: WasmApi['moveRobotToWaypoint']
+          moveRobotToWaypointWithProducts?: WasmApi['moveRobotToWaypointWithProducts']
           hasArrivedAtWaypoint: WasmApi['hasArrivedAtWaypoint']
         }
 
@@ -80,6 +89,7 @@ export async function loadWasm(): Promise<WasmApi> {
           computePath: stub.computePath,
           updateRobots: stub.updateRobots,
           moveRobotToWaypoint: stub.moveRobotToWaypoint,
+          moveRobotToWaypointWithProducts: stub.moveRobotToWaypointWithProducts,
           hasArrivedAtWaypoint: stub.hasArrivedAtWaypoint
         }
       })

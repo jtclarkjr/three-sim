@@ -56,6 +56,37 @@ pub fn check_product_collision(x: f32, y: f32, products: &[f32]) -> Option<(f32,
     None
 }
 
+pub fn check_product_collision_along_segment(
+    x1: f32,
+    y1: f32,
+    x2: f32,
+    y2: f32,
+    products: &[f32],
+) -> Option<(f32, f32)> {
+    let radius = ROBOT_RADIUS + PRODUCT_RADIUS + COLLISION_BUFFER;
+    let seg_dx = x2 - x1;
+    let seg_dy = y2 - y1;
+    let seg_len_sq = seg_dx * seg_dx + seg_dy * seg_dy;
+    for chunk in products.chunks_exact(2) {
+        let px = chunk[0];
+        let py = chunk[1];
+        let t = if seg_len_sq > 0.0001 {
+            ((px - x1) * seg_dx + (py - y1) * seg_dy) / seg_len_sq
+        } else {
+            0.0
+        };
+        let clamped_t = t.clamp(0.0, 1.0);
+        let closest_x = x1 + seg_dx * clamped_t;
+        let closest_y = y1 + seg_dy * clamped_t;
+        let dx = closest_x - px;
+        let dy = closest_y - py;
+        if dx * dx + dy * dy < radius * radius {
+            return Some((px, py));
+        }
+    }
+    None
+}
+
 pub fn update_single_robot(
     x: f32,
     y: f32,
@@ -201,13 +232,13 @@ pub fn update_single_robot(
 }
 
 pub fn move_to_waypoint(
-    x: f32,
-    y: f32,
-    orientation: f32,
-    speed: f32,
-    waypoint_x: f32,
-    waypoint_y: f32,
-    delta_ms: f32,
+  x: f32,
+  y: f32,
+  orientation: f32,
+  speed: f32,
+  waypoint_x: f32,
+  waypoint_y: f32,
+  delta_ms: f32,
 ) -> [f32; 3] {
     let delta_seconds = delta_ms / 1000.0;
     let dx = waypoint_x - x;
@@ -224,6 +255,71 @@ pub fn move_to_waypoint(
 
     let new_x = x + direction.cos() * clamped_step;
     let new_y = y + direction.sin() * clamped_step;
+
+  [new_x, new_y, direction]
+}
+
+pub fn move_to_waypoint_with_collision(
+    x: f32,
+    y: f32,
+    orientation: f32,
+    speed: f32,
+    waypoint_x: f32,
+    waypoint_y: f32,
+    delta_ms: f32,
+    products: &[f32],
+    config: &StoreConfig,
+) -> [f32; 3] {
+    let delta_seconds = delta_ms / 1000.0;
+    let dx = waypoint_x - x;
+    let dy = waypoint_y - y;
+    let distance = (dx * dx + dy * dy).sqrt();
+
+    if distance < 0.01 {
+        return [x, y, orientation];
+    }
+
+    let direction = dy.atan2(dx);
+    let step = speed * delta_seconds;
+    let clamped_step = step.min(distance);
+
+    let mut new_x = x + direction.cos() * clamped_step;
+    let mut new_y = y + direction.sin() * clamped_step;
+
+    if !is_in_row_walkway(x, y, config) {
+        let (valid_x, valid_y) = find_nearest_valid_position(x, y, config);
+        return [valid_x, valid_y, orientation];
+    }
+
+    if !is_in_row_walkway(new_x, new_y, config) {
+        if is_in_row_walkway(new_x, y, config) {
+            new_y = y;
+        } else if is_in_row_walkway(x, new_y, config) {
+            new_x = x;
+        } else {
+            return [x, y, orientation];
+        }
+    }
+
+    if let Some((px, py)) =
+        check_product_collision_along_segment(x, y, new_x, new_y, products)
+    {
+        let dxp = new_x - px;
+        let dyp = new_y - py;
+        let dist = (dxp * dxp + dyp * dyp).sqrt().max(0.0001);
+
+        let normal_x = dxp / dist;
+        let normal_y = dyp / dist;
+
+        let push_distance = ROBOT_RADIUS + PRODUCT_RADIUS + COLLISION_BUFFER + 0.2;
+        new_x = px + normal_x * push_distance;
+        new_y = py + normal_y * push_distance;
+
+        if !is_in_row_walkway(new_x, new_y, config) {
+            new_x = x;
+            new_y = y;
+        }
+    }
 
     [new_x, new_y, direction]
 }

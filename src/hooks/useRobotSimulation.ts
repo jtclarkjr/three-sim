@@ -31,6 +31,31 @@ function getIdleDestination(config: RowConfig) {
   return transformPosition(x, y, config.orientation)
 }
 
+function toStorePosition(
+  position: { x: number; y: number },
+  orientation: RowConfig['orientation']
+) {
+  return orientation === 'horizontal'
+    ? { x: position.y, y: position.x }
+    : position
+}
+
+function getPickupTarget(product: Product, config: RowConfig) {
+  const storePos = toStorePosition(product, config.orientation)
+  const rawIndex = Math.round(
+    (storePos.x + config.storeWidth / 2 - config.startOffset) / config.spacing
+  )
+  const rowIndex = Math.min(Math.max(rawIndex, 0), config.count - 1)
+  const rowCenter = getRowCenterCoord(rowIndex, config)
+  const offset = config.thickness / 2 + 2
+  const direction = rowIndex < config.count - 1 ? 1 : -1
+  let x = rowCenter + direction * offset
+  const minX = -config.storeWidth / 2 + 5
+  const maxX = config.storeWidth / 2 - 5
+  x = Math.min(Math.max(x, minX), maxX)
+  return transformPosition(x, storePos.y, config.orientation)
+}
+
 function flattenRobots(robots: Robot[]) {
   const data = new Float32Array(robots.length * 7)
   robots.forEach((robot, idx) => {
@@ -192,8 +217,8 @@ export function useRobotSimulation(
 
               const pickup = productLookup.current.get(existingTask.productId)
               const target =
-                existingTask.phase === 'toProduct'
-                  ? pickup
+                existingTask.phase === 'toProduct' && pickup
+                  ? getPickupTarget(pickup, rowConfig)
                   : existingTask.dropTarget
 
               if (!target) return robot
@@ -210,7 +235,9 @@ export function useRobotSimulation(
                 existingTask.waypointIndex >= existingTask.waypoints.length ||
                 existingTask.waypointsTarget !== currentTargetKey
 
-              const preferOuterWalkway = existingTask.phase === 'toProduct'
+              const preferOuterWalkway =
+                existingTask.phase === 'toProduct' ||
+                existingTask.phase === 'toDropoff'
               const plannedPath = shouldPlanPath
                 ? computePath(
                     wasmModule,
@@ -278,6 +305,34 @@ export function useRobotSimulation(
               ? waypoints[waypointIndex]
               : null) ??
               robot.task?.dropTarget ?? { x: robot.destX, y: robot.destY }
+            if (typeof wasmModule.moveRobotToWaypointWithProducts === 'function') {
+              const robotData = new Float32Array([
+                robot.x,
+                robot.y,
+                robot.destX,
+                robot.destY,
+                robot.orientation,
+                MAX_ROBOT_SPEED,
+                robot.lastMoveTime ?? 0,
+                waypoint.x,
+                waypoint.y,
+                UPDATE_INTERVAL
+              ])
+              const productBuffer = flattenProducts(products)
+              const result = wasmModule.moveRobotToWaypointWithProducts(
+                robotData,
+                productBuffer,
+                configBuffer
+              )
+              if (result.length >= 3) {
+                return {
+                  ...robot,
+                  x: result[0],
+                  y: result[1],
+                  orientation: result[2]
+                }
+              }
+            }
             return moveRobotToWaypoint(
               wasmModule,
               robot,
@@ -293,7 +348,9 @@ export function useRobotSimulation(
 
           const pickup = productLookup.current.get(robot.task.productId)
           const target =
-            robot.task.phase === 'toProduct' ? pickup : robot.task.dropTarget
+            robot.task.phase === 'toProduct' && pickup
+              ? getPickupTarget(pickup, rowConfig)
+              : robot.task.dropTarget
 
           if (!target) {
             return { ...robot, task: undefined, carryingProductId: undefined }
@@ -326,7 +383,7 @@ export function useRobotSimulation(
                 wasmModule,
                 robot,
                 robot.task.dropTarget,
-                false,
+                true,
                 rowConfig
               )
               const firstDropWaypoint = dropPath[0] ?? robot.task.dropTarget

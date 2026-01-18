@@ -189,6 +189,55 @@ pub fn move_robot_to_waypoint(robot_data: &[f32], config: &[f32]) -> Vec<f32> {
     vec![out_x, out_y, out_orientation]
 }
 
+/// Move a single robot towards a target waypoint with product collision checks
+/// Input: [x, y, destX, destY, orientation, speed, lastMoveTime, waypointX, waypointY, deltaMs]
+/// Config format: [storeWidth, storeHeight, rowCount, rowSpacing, rowThickness, startOffset, walkwayWidth, crossRowBuffer, outerWalkwayOffset, orientation]
+/// Output: [newX, newY, orientation]
+#[wasm_bindgen]
+pub fn move_robot_to_waypoint_with_products(
+    robot_data: &[f32],
+    products: &[f32],
+    config: &[f32],
+) -> Vec<f32> {
+    if robot_data.len() < 10 {
+        return Vec::new();
+    }
+
+    let store_config = StoreConfig::from_buffer(config);
+    let (x, y) = store_config.transform_coords(robot_data[0], robot_data[1]);
+    let orientation = store_config.transform_orientation(robot_data[4]);
+    let (waypoint_x, waypoint_y) =
+        store_config.transform_coords(robot_data[7], robot_data[8]);
+    let transformed_products = if matches!(store_config.orientation, Orientation::Horizontal) {
+        let mut out = Vec::with_capacity(products.len());
+        for chunk in products.chunks_exact(2) {
+            let (px, py) = store_config.transform_coords(chunk[0], chunk[1]);
+            out.push(px);
+            out.push(py);
+        }
+        Some(out)
+    } else {
+        None
+    };
+    let products_ref = transformed_products.as_deref().unwrap_or(products);
+
+    let result = move_to_waypoint_with_collision(
+        x,
+        y,
+        orientation,
+        robot_data[5],
+        waypoint_x,
+        waypoint_y,
+        robot_data[9],
+        products_ref,
+        &store_config,
+    );
+
+    let (out_x, out_y) = store_config.transform_coords(result[0], result[1]);
+    let out_orientation = store_config.transform_orientation(result[2]);
+    vec![out_x, out_y, out_orientation]
+}
+
 /// Check if a robot has arrived at its waypoint
 /// Input: [robotX, robotY, waypointX, waypointY]
 /// Config format: [storeWidth, storeHeight, rowCount, rowSpacing, rowThickness, startOffset, walkwayWidth, crossRowBuffer, outerWalkwayOffset, orientation]

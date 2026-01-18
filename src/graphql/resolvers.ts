@@ -17,18 +17,19 @@ export const resolvers = {
         .from(simulationConfig)
         .where(eq(simulationConfig.id, 1))
         .limit(1)
+        .all()
 
       return config[0] || null
     },
 
     async products() {
       const { db, products } = await getDb()
-      return await db.select().from(products).orderBy(products.id)
+      return await db.select().from(products).orderBy(products.id).all()
     },
 
     async productCount() {
       const { db, products } = await getDb()
-      const result = await db.select({ count: products.id }).from(products)
+      const result = await db.select({ count: products.id }).from(products).all()
       return result.length
     }
   },
@@ -101,6 +102,7 @@ export const resolvers = {
             .from(simulationConfig)
             .where(eq(simulationConfig.id, 1))
             .limit(1)
+            .all()
 
           if (existingConfig.length > 0) {
             tx
@@ -124,6 +126,7 @@ export const resolvers = {
                 orientation
               })
               .where(eq(simulationConfig.id, 1))
+              .run()
           } else {
             tx.insert(simulationConfig).values({
               id: 1,
@@ -143,21 +146,24 @@ export const resolvers = {
               storeWidth,
               storeHeight,
               orientation
-            })
+            }).run()
           }
 
-          tx.delete(products)
+          tx.delete(products).run()
 
           const CHUNK_SIZE = 100
           for (let i = 0; i < productList.length; i += CHUNK_SIZE) {
             const chunk = productList.slice(i, i + CHUNK_SIZE)
-            tx.insert(products).values(
-              chunk.map((p) => ({
-                id: p.id,
-                x: p.x,
-                y: p.y
-              }))
-            )
+            tx
+              .insert(products)
+              .values(
+                chunk.map((p) => ({
+                  id: p.id,
+                  x: p.x,
+                  y: p.y
+                }))
+              )
+              .run()
           }
         })
 
@@ -166,6 +172,7 @@ export const resolvers = {
           .from(simulationConfig)
           .where(eq(simulationConfig.id, 1))
           .limit(1)
+          .all()
 
         return {
           success: true,
@@ -184,9 +191,9 @@ export const resolvers = {
       try {
         const { db, products, simulationConfig } = await getDb()
 
-        await db.transaction(async (tx) => {
-          await tx.delete(products)
-          await tx.delete(simulationConfig)
+        await db.transaction((tx) => {
+          tx.delete(products).run()
+          tx.delete(simulationConfig).run()
         })
 
         return {

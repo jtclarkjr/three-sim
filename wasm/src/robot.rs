@@ -146,17 +146,8 @@ pub fn update_single_robot(
     }
 
     if !is_in_row_walkway(new_x, new_y, config) {
-        if is_in_row_walkway(new_x, y, config) {
-            new_y = y;
-        } else if is_in_row_walkway(x, new_y, config) {
-            new_x = x;
-        } else {
-            let (nx, ny) = get_valid_destination(config);
-            dest_x = nx;
-            dest_y = ny;
-            new_x = x;
-            new_y = y;
-        }
+        let (nx, ny) = get_valid_destination(config);
+        return [x, y, nx, ny, orientation, speed, 0.0];
     }
 
     if let Some((px, py)) = check_product_collision(new_x, new_y, products) {

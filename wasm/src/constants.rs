@@ -17,12 +17,12 @@ pub enum Orientation {
 pub struct StoreConfig {
     pub store_width: f32,
     pub store_height: f32,
-    pub aisle_count: i32,
-    pub aisle_spacing: f32,
-    pub aisle_width: f32,
+    pub row_count: i32,
+    pub row_spacing: f32,
+    pub row_thickness: f32,
     pub start_offset: f32,
     pub walkway_width: f32,
-    pub cross_aisle_buffer: f32,
+    pub cross_row_buffer: f32,
     pub outer_walkway_offset: f32,
     pub orientation: Orientation,
 }
@@ -32,12 +32,12 @@ impl StoreConfig {
         StoreConfig {
             store_width: config.get(0).copied().unwrap_or(250.0),
             store_height: config.get(1).copied().unwrap_or(150.0),
-            aisle_count: config.get(2).copied().unwrap_or(6.0) as i32,
-            aisle_spacing: config.get(3).copied().unwrap_or(40.0),
-            aisle_width: config.get(4).copied().unwrap_or(6.0),
+            row_count: config.get(2).copied().unwrap_or(6.0) as i32,
+            row_spacing: config.get(3).copied().unwrap_or(40.0),
+            row_thickness: config.get(4).copied().unwrap_or(6.0),
             start_offset: config.get(5).copied().unwrap_or(20.0),
             walkway_width: config.get(6).copied().unwrap_or(10.0),
-            cross_aisle_buffer: config.get(7).copied().unwrap_or(4.0),
+            cross_row_buffer: config.get(7).copied().unwrap_or(4.0),
             outer_walkway_offset: config.get(8).copied().unwrap_or(12.0),
             orientation: if config.get(9).copied().unwrap_or(0.0) > 0.5 {
                 Orientation::Horizontal
@@ -47,8 +47,8 @@ impl StoreConfig {
         }
     }
 
-    pub fn get_aisle_center(&self, aisle_index: i32) -> f32 {
-        -self.store_width / 2.0 + self.start_offset + (aisle_index as f32) * self.aisle_spacing
+    pub fn get_row_center(&self, row_index: i32) -> f32 {
+        -self.store_width / 2.0 + self.start_offset + (row_index as f32) * self.row_spacing
     }
 
     pub fn transform_coords(&self, x: f32, y: f32) -> (f32, f32) {

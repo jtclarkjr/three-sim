@@ -14,14 +14,14 @@ type SimulationConfig {
   robotCount: Int!
   trackedRobotId: String
   pickupProductId: String
-  dropAisle: Int
+  dropRow: Int
   dropProgress: Int
-  aisleCount: Int
-  aisleSpacing: Float
-  aisleWidth: Float
+  rowCount: Int
+  rowSpacing: Float
+  rowThickness: Float
   startOffset: Float
   walkwayWidth: Float
-  crossAisleBuffer: Float
+  crossRowBuffer: Float
   outerWalkwayOffset: Float
   storeWidth: Float
   storeHeight: Float
@@ -40,14 +40,14 @@ input SaveSimulationInput {
   robotCount: Int!
   trackedRobotId: String
   pickupProductId: String
-  dropAisle: Int
+  dropRow: Int
   dropProgress: Int
-  aisleCount: Int
-  aisleSpacing: Float
-  aisleWidth: Float
+  rowCount: Int
+  rowSpacing: Float
+  rowThickness: Float
   startOffset: Float
   walkwayWidth: Float
-  crossAisleBuffer: Float
+  crossRowBuffer: Float
   outerWalkwayOffset: Float
   storeWidth: Float
   storeHeight: Float

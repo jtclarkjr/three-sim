@@ -55,7 +55,7 @@ pub fn lerp_vectors(a: &[f32], b: &[f32], t: f32) -> Vec<f32> {
 
 /// Update multiple robots in parallel
 /// Input format per robot: [x, y, destX, destY, orientation, speed, lastMoveTime]
-/// Config format: [storeWidth, storeHeight, aisleCount, aisleSpacing, aisleWidth, startOffset, walkwayWidth, crossAisleBuffer, outerWalkwayOffset, orientation]
+/// Config format: [storeWidth, storeHeight, rowCount, rowSpacing, rowThickness, startOffset, walkwayWidth, crossRowBuffer, outerWalkwayOffset, orientation]
 #[wasm_bindgen]
 pub fn update_robots(robots: &[f32], products: &[f32], config: &[f32], delta_ms: f32) -> Vec<f32> {
     if !robots.len().is_multiple_of(7) {
@@ -117,7 +117,7 @@ pub fn update_robots(robots: &[f32], products: &[f32], config: &[f32], delta_ms:
 }
 
 /// Compute a path from start to end, optionally preferring outer walkways
-/// Config format: [storeWidth, storeHeight, aisleCount, aisleSpacing, aisleWidth, startOffset, walkwayWidth, crossAisleBuffer, outerWalkwayOffset, orientation]
+/// Config format: [storeWidth, storeHeight, rowCount, rowSpacing, rowThickness, startOffset, walkwayWidth, crossRowBuffer, outerWalkwayOffset, orientation]
 #[wasm_bindgen]
 pub fn compute_path(
     start: &[f32],
@@ -161,7 +161,7 @@ pub fn compute_path(
 
 /// Move a single robot towards a target waypoint
 /// Input: [x, y, destX, destY, orientation, speed, lastMoveTime, waypointX, waypointY, deltaMs]
-/// Config format: [storeWidth, storeHeight, aisleCount, aisleSpacing, aisleWidth, startOffset, walkwayWidth, crossAisleBuffer, outerWalkwayOffset, orientation]
+/// Config format: [storeWidth, storeHeight, rowCount, rowSpacing, rowThickness, startOffset, walkwayWidth, crossRowBuffer, outerWalkwayOffset, orientation]
 /// Output: [newX, newY, orientation]
 #[wasm_bindgen]
 pub fn move_robot_to_waypoint(robot_data: &[f32], config: &[f32]) -> Vec<f32> {
@@ -191,7 +191,7 @@ pub fn move_robot_to_waypoint(robot_data: &[f32], config: &[f32]) -> Vec<f32> {
 
 /// Check if a robot has arrived at its waypoint
 /// Input: [robotX, robotY, waypointX, waypointY]
-/// Config format: [storeWidth, storeHeight, aisleCount, aisleSpacing, aisleWidth, startOffset, walkwayWidth, crossAisleBuffer, outerWalkwayOffset, orientation]
+/// Config format: [storeWidth, storeHeight, rowCount, rowSpacing, rowThickness, startOffset, walkwayWidth, crossRowBuffer, outerWalkwayOffset, orientation]
 /// Output: 1.0 if arrived, 0.0 if not
 #[wasm_bindgen]
 pub fn has_arrived_at_waypoint(positions: &[f32], config: &[f32]) -> f32 {

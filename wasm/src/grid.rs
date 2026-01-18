@@ -24,9 +24,9 @@ pub fn build_nav_grid(config: &StoreConfig) -> Vec<Vec<bool>> {
     let rows = (config.store_height / NAV_CELL_SIZE).ceil() as i32;
     let mut grid = vec![vec![true; cols as usize]; rows as usize];
 
-    let half_shelf = config.aisle_width / 2.0 + 1.5;
-    for aisle in 0..config.aisle_count {
-        let center_x = config.get_aisle_center(aisle);
+    let half_shelf = config.row_thickness / 2.0 + 1.5;
+    for row in 0..config.row_count {
+        let center_x = config.get_row_center(row);
         let min_x = center_x - half_shelf;
         let max_x = center_x + half_shelf;
         let min_col = clamp(
@@ -49,17 +49,18 @@ pub fn build_nav_grid(config: &StoreConfig) -> Vec<Vec<bool>> {
     grid
 }
 
-pub fn is_in_aisle_walkway(x: f32, y: f32, config: &StoreConfig) -> bool {
+pub fn is_in_row_walkway(x: f32, y: f32, config: &StoreConfig) -> bool {
     let top_walkway_y = config.store_height / 2.0 - config.walkway_width;
     let bottom_walkway_y = -config.store_height / 2.0 + config.walkway_width;
 
-    for aisle in 0..(config.aisle_count - 1) {
-        let aisle_x = config.get_aisle_center(aisle);
-        let next_aisle_x = config.get_aisle_center(aisle + 1);
-        let mid_x = (aisle_x + next_aisle_x) / 2.0;
-        let cross_aisle_width = config.aisle_spacing - config.aisle_width - config.cross_aisle_buffer;
+    for row in 0..(config.row_count - 1) {
+        let row_x = config.get_row_center(row);
+        let next_row_x = config.get_row_center(row + 1);
+        let mid_x = (row_x + next_row_x) / 2.0;
+        let cross_row_width =
+            config.row_spacing - config.row_thickness - config.cross_row_buffer;
 
-        if (x - mid_x).abs() < cross_aisle_width / 2.0 {
+        if (x - mid_x).abs() < cross_row_width / 2.0 {
             let y_in_bounds = y.abs() < config.store_height / 2.0 - 5.0;
             if y_in_bounds {
                 return true;

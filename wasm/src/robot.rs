@@ -1,17 +1,17 @@
 use crate::constants::*;
 use crate::geometry::*;
-use crate::grid::is_in_aisle_walkway;
+use crate::grid::is_in_row_walkway;
 
 pub fn find_nearest_valid_position(x: f32, y: f32, config: &StoreConfig) -> (f32, f32) {
-    let mut nearest_aisle_x = config.get_aisle_center(0);
-    let mut min_dist = (x - nearest_aisle_x).abs();
+    let mut nearest_row_x = config.get_row_center(0);
+    let mut min_dist = (x - nearest_row_x).abs();
 
-    for aisle in 1..config.aisle_count {
-        let aisle_x = config.get_aisle_center(aisle);
-        let dist = (x - aisle_x).abs();
+    for row in 1..config.row_count {
+        let row_x = config.get_row_center(row);
+        let dist = (x - row_x).abs();
         if dist < min_dist {
             min_dist = dist;
-            nearest_aisle_x = aisle_x;
+            nearest_row_x = row_x;
         }
     }
 
@@ -20,28 +20,28 @@ pub fn find_nearest_valid_position(x: f32, y: f32, config: &StoreConfig) -> (f32
         -config.store_height / 2.0 + 10.0,
         config.store_height / 2.0 - 10.0,
     );
-    (nearest_aisle_x, clamped_y)
+    (nearest_row_x, clamped_y)
 }
 
 pub fn get_valid_destination(config: &StoreConfig) -> (f32, f32) {
     for _ in 0..50 {
         if random_f32() > 0.2 {
-            let aisle_num = (random_f32() * config.aisle_count as f32).floor() as i32;
-            let aisle_x = config.get_aisle_center(aisle_num);
+            let row_num = (random_f32() * config.row_count as f32).floor() as i32;
+            let row_x = config.get_row_center(row_num);
             let y = random_f32() * (config.store_height - 30.0) - (config.store_height - 30.0) / 2.0;
-            return (aisle_x, y);
+            return (row_x, y);
         } else {
             let x = random_f32() * config.store_width - config.store_width / 2.0;
             let y = random_f32() * config.store_height - config.store_height / 2.0;
-            if is_in_aisle_walkway(x, y, config) {
+            if is_in_row_walkway(x, y, config) {
                 return (x, y);
             }
         }
     }
 
-    let aisle_num = (random_f32() * config.aisle_count as f32).floor() as i32;
-    let aisle_x = config.get_aisle_center(aisle_num);
-    (aisle_x, 0.0)
+    let row_num = (random_f32() * config.row_count as f32).floor() as i32;
+    let row_x = config.get_row_center(row_num);
+    (row_x, 0.0)
 }
 
 pub fn check_product_collision(x: f32, y: f32, products: &[f32]) -> Option<(f32, f32)> {
@@ -108,16 +108,16 @@ pub fn update_single_robot(
     let mut new_x = x + move_x;
     let mut new_y = y + move_y;
 
-    if !is_in_aisle_walkway(x, y, config) {
+    if !is_in_row_walkway(x, y, config) {
         let (valid_x, valid_y) = find_nearest_valid_position(x, y, config);
         let (nx, ny) = get_valid_destination(config);
         return [valid_x, valid_y, nx, ny, orientation, speed, 0.0];
     }
 
-    if !is_in_aisle_walkway(new_x, new_y, config) {
-        if is_in_aisle_walkway(new_x, y, config) {
+    if !is_in_row_walkway(new_x, new_y, config) {
+        if is_in_row_walkway(new_x, y, config) {
             new_y = y;
-        } else if is_in_aisle_walkway(x, new_y, config) {
+        } else if is_in_row_walkway(x, new_y, config) {
             new_x = x;
         } else {
             let (nx, ny) = get_valid_destination(config);
@@ -163,7 +163,7 @@ pub fn update_single_robot(
             config.store_height / 2.0 - 10.0,
         );
 
-        if !is_in_aisle_walkway(dest_x, dest_y, config) {
+        if !is_in_row_walkway(dest_x, dest_y, config) {
             let (nx, ny) = get_valid_destination(config);
             dest_x = nx;
             dest_y = ny;
@@ -173,7 +173,7 @@ pub fn update_single_robot(
         new_x = px + normal_x * push_distance;
         new_y = py + normal_y * push_distance;
 
-        if !is_in_aisle_walkway(new_x, new_y, config) {
+        if !is_in_row_walkway(new_x, new_y, config) {
             new_x = x;
             new_y = y;
             let (nx, ny) = get_valid_destination(config);

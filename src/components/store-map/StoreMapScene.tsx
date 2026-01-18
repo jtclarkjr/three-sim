@@ -8,8 +8,8 @@ import { useRobotSimulation } from '@/hooks/useRobotSimulation'
 import { generateProducts, generateRobots } from './mockData'
 import { Products } from './Products'
 import { RobotMesh } from './RobotMesh'
-import type { AisleConfig, Product, Robot, RobotTask } from './types'
-import { DEFAULT_AISLE_CONFIG } from './types'
+import type { Product, Robot, RobotTask, RowConfig } from './types'
+import { DEFAULT_ROW_CONFIG } from './types'
 
 interface StoreMapSceneProps {
   productCount?: number
@@ -20,7 +20,7 @@ interface StoreMapSceneProps {
   activeCommand?: RobotTask | null
   onCommandComplete?: (commandId: string) => void
   onTrackedRobotUpdate?: (robot: Robot | undefined) => void
-  aisleConfig?: AisleConfig
+  rowConfig?: RowConfig
   followTrackedRobot?: boolean
 }
 
@@ -136,23 +136,23 @@ export const StoreMapScene = ({
   activeCommand,
   onCommandComplete,
   onTrackedRobotUpdate,
-  aisleConfig = DEFAULT_AISLE_CONFIG,
+  rowConfig = DEFAULT_ROW_CONFIG,
   followTrackedRobot = false
 }: StoreMapSceneProps) => {
   const productsToUse = useMemo(
-    () => products ?? generateProducts(productCount, aisleConfig),
-    [productCount, products, aisleConfig]
+    () => products ?? generateProducts(productCount, rowConfig),
+    [productCount, products, rowConfig]
   )
   const robotsToSimulate = useMemo(
-    () => initialRobots ?? generateRobots(robotCount, aisleConfig),
-    [initialRobots, robotCount, aisleConfig]
+    () => initialRobots ?? generateRobots(robotCount, rowConfig),
+    [initialRobots, robotCount, rowConfig]
   )
   const robots = useRobotSimulation(
     robotsToSimulate,
     productsToUse,
     activeCommand,
     onCommandComplete,
-    aisleConfig
+    rowConfig
   )
   const trackedRobot = useMemo(
     () => robots.find((robot) => robot.id === trackedRobotId),
@@ -173,26 +173,26 @@ export const StoreMapScene = ({
 
   const cameraDistance = useMemo(() => {
     const maxDimension = Math.max(
-      aisleConfig.storeWidth,
-      aisleConfig.storeHeight
+      rowConfig.storeWidth,
+      rowConfig.storeHeight
     )
     return maxDimension * 0.8
-  }, [aisleConfig.storeWidth, aisleConfig.storeHeight])
+  }, [rowConfig.storeWidth, rowConfig.storeHeight])
 
   const maxCameraDistance = useMemo(() => {
     const maxDimension = Math.max(
-      aisleConfig.storeWidth,
-      aisleConfig.storeHeight
+      rowConfig.storeWidth,
+      rowConfig.storeHeight
     )
     return maxDimension * 2
-  }, [aisleConfig.storeWidth, aisleConfig.storeHeight])
+  }, [rowConfig.storeWidth, rowConfig.storeHeight])
   const followOffset = useMemo(() => {
     const maxDimension = Math.max(
-      aisleConfig.storeWidth,
-      aisleConfig.storeHeight
+      rowConfig.storeWidth,
+      rowConfig.storeHeight
     )
     return new Vector3(0, maxDimension * 0.22, maxDimension * 0.28)
-  }, [aisleConfig.storeWidth, aisleConfig.storeHeight])
+  }, [rowConfig.storeWidth, rowConfig.storeHeight])
   const orbitControlsRef = useRef<OrbitControlsType>(null)
 
   return (
@@ -217,10 +217,10 @@ export const StoreMapScene = ({
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
           shadow-camera-far={500}
-          shadow-camera-left={-aisleConfig.storeWidth}
-          shadow-camera-right={aisleConfig.storeWidth}
-          shadow-camera-top={aisleConfig.storeHeight}
-          shadow-camera-bottom={-aisleConfig.storeHeight}
+          shadow-camera-left={-rowConfig.storeWidth}
+          shadow-camera-right={rowConfig.storeWidth}
+          shadow-camera-top={rowConfig.storeHeight}
+          shadow-camera-bottom={-rowConfig.storeHeight}
         />
 
         <pointLight position={[0, 50, 0]} intensity={0.5} color="#ffffff" />
@@ -231,7 +231,7 @@ export const StoreMapScene = ({
           receiveShadow
         >
           <planeGeometry
-            args={[aisleConfig.storeWidth * 1.2, aisleConfig.storeHeight * 1.2]}
+            args={[rowConfig.storeWidth * 1.2, rowConfig.storeHeight * 1.2]}
           />
           <meshStandardMaterial color="#1a1a2e" roughness={0.8} />
         </mesh>

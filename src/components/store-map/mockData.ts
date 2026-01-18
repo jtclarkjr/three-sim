@@ -1,19 +1,19 @@
-import type { AisleConfig, Product, Robot } from './types'
-import { DEFAULT_AISLE_CONFIG } from './types'
+import type { Product, Robot, RowConfig } from './types'
+import { DEFAULT_ROW_CONFIG } from './types'
 
 const STORE_WIDTH = 250
 const STORE_HEIGHT = 150
 
-export function aisleConfigToBuffer(config: AisleConfig): Float32Array {
+export function rowConfigToBuffer(config: RowConfig): Float32Array {
   return new Float32Array([
     config.storeWidth,
     config.storeHeight,
     config.count,
     config.spacing,
-    config.width,
+    config.thickness,
     config.startOffset,
     config.walkwayWidth,
-    config.crossAisleBuffer,
+    config.crossRowBuffer,
     config.outerWalkwayOffset,
     config.orientation === 'horizontal' ? 1 : 0
   ])
@@ -27,38 +27,41 @@ export function transformPosition(
   return orientation === 'horizontal' ? { x: y, y: x } : { x, y }
 }
 
-export function getAisleCenterCoord(
-  aisleIndex: number,
-  config: AisleConfig
+export function getRowCenterCoord(
+  rowIndex: number,
+  config: RowConfig
 ): number {
   return (
-    -config.storeWidth / 2 + config.startOffset + aisleIndex * config.spacing
+    -config.storeWidth / 2 + config.startOffset + rowIndex * config.spacing
   )
 }
 
 export const generateProducts = (
   count: number,
-  config: AisleConfig = DEFAULT_AISLE_CONFIG
+  config: RowConfig = DEFAULT_ROW_CONFIG
 ): Product[] => {
   const products: Product[] = []
 
-  // storefloor-style layout: multiple aisles with shelving units
-  const productsPerAisle = Math.floor(count / (config.count * 2))
-
+  // Single-line rows of products
+  const basePerRow = Math.floor(count / config.count)
+  const remainder = count % config.count
   let productId = 0
 
-  for (let aisle = 0; aisle < config.count; aisle++) {
-    const aisleX = getAisleCenterCoord(aisle, config)
+  for (let row = 0; row < config.count; row++) {
+    const rowX = getRowCenterCoord(row, config)
+    const rowProductCount = basePerRow + (row < remainder ? 1 : 0)
+    if (rowProductCount <= 0) continue
+    const span = config.storeHeight - 30
+    const step = rowProductCount > 1 ? span / (rowProductCount - 1) : 0
 
-    // Left side shelves
-    for (let i = 0; i < productsPerAisle; i++) {
+    for (let i = 0; i < rowProductCount; i++) {
       if (productId >= count) break
 
       const pos = transformPosition(
-        aisleX - config.width / 2 + (Math.random() - 0.5) * 1.5,
+        rowX + (Math.random() - 0.5) * (config.thickness * 0.35),
         -config.storeHeight / 2 +
           15 +
-          (i / productsPerAisle) * (config.storeHeight - 30) +
+          (rowProductCount > 1 ? i * step : span / 2) +
           (Math.random() - 0.5) * 2,
         config.orientation
       )
@@ -69,41 +72,6 @@ export const generateProducts = (
         y: pos.y
       })
     }
-
-    // Right side shelves
-    for (let i = 0; i < productsPerAisle; i++) {
-      if (productId >= count) break
-
-      const pos = transformPosition(
-        aisleX + config.width / 2 + (Math.random() - 0.5) * 1.5,
-        -config.storeHeight / 2 +
-          15 +
-          (i / productsPerAisle) * (config.storeHeight - 30) +
-          (Math.random() - 0.5) * 2,
-        config.orientation
-      )
-
-      products.push({
-        id: `product-${productId++}`,
-        x: pos.x,
-        y: pos.y
-      })
-    }
-  }
-
-  // Fill remaining products randomly in warehouse section
-  while (productId < count) {
-    const pos = transformPosition(
-      Math.random() * config.storeWidth - config.storeWidth / 2,
-      Math.random() * config.storeHeight - config.storeHeight / 2,
-      config.orientation
-    )
-
-    products.push({
-      id: `product-${productId++}`,
-      x: pos.x,
-      y: pos.y
-    })
   }
 
   return products
@@ -114,7 +82,7 @@ export const MAX_ROBOT_SPEED = 5
 
 export const generateRobots = (
   count: number,
-  config: AisleConfig = DEFAULT_AISLE_CONFIG
+  config: RowConfig = DEFAULT_ROW_CONFIG
 ): Robot[] => {
   const robots: Robot[] = []
   const robotNames = [
@@ -130,28 +98,28 @@ export const generateRobots = (
     'GERTY'
   ]
 
-  // Robots start in wide cross-aisles between shelf pairs
+  // Robots start in wide cross-rows between product lines
   const variants: Robot['variant'][] = ['walking', 'tracked', 'dome']
   const numWalkways = Math.max(1, config.count - 1)
 
   for (let i = 0; i < count; i++) {
     // Start robots at top or bottom edge
     const startAtTop = Math.random() > 0.5
-    const betweenAisleNum = Math.floor(Math.random() * numWalkways)
-    const aisleX = getAisleCenterCoord(betweenAisleNum, config)
-    const nextAisleX = getAisleCenterCoord(betweenAisleNum + 1, config)
-    const midX = (aisleX + nextAisleX) / 2 // Center of wide cross-aisle
+    const betweenRowNum = Math.floor(Math.random() * numWalkways)
+    const rowX = getRowCenterCoord(betweenRowNum, config)
+    const nextRowX = getRowCenterCoord(betweenRowNum + 1, config)
+    const midX = (rowX + nextRowX) / 2 // Center of wide cross-row
     const midY = startAtTop
       ? config.storeHeight / 2 - 10
       : -config.storeHeight / 2 + 10
 
     const pos = transformPosition(midX, midY, config.orientation)
 
-    // Destination at opposite end in another wide cross-aisle
-    const destBetweenAisleNum = Math.floor(Math.random() * numWalkways)
-    const destAisleX = getAisleCenterCoord(destBetweenAisleNum, config)
-    const destNextAisleX = getAisleCenterCoord(destBetweenAisleNum + 1, config)
-    const destMidX = (destAisleX + destNextAisleX) / 2
+    // Destination at opposite end in another wide cross-row
+    const destBetweenRowNum = Math.floor(Math.random() * numWalkways)
+    const destRowX = getRowCenterCoord(destBetweenRowNum, config)
+    const destNextRowX = getRowCenterCoord(destBetweenRowNum + 1, config)
+    const destMidX = (destRowX + destNextRowX) / 2
     const destMidY = startAtTop
       ? -config.storeHeight / 2 + 10
       : config.storeHeight / 2 - 10
@@ -181,11 +149,11 @@ export const STORE_BOUNDS = {
   height: STORE_HEIGHT
 }
 
-export const AISLE_CONFIG = {
+export const ROW_CONFIG = {
   count: 6,
   spacing: 40,
   startX: -STORE_WIDTH / 2 + 20
 }
 
-export const getAisleCenterX = (aisleIndex: number) =>
-  AISLE_CONFIG.startX + aisleIndex * AISLE_CONFIG.spacing
+export const getRowCenterX = (rowIndex: number) =>
+  ROW_CONFIG.startX + rowIndex * ROW_CONFIG.spacing

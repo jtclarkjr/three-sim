@@ -42,14 +42,14 @@ export const resolvers = {
           robotCount: number
           trackedRobotId?: string | null
           pickupProductId?: string | null
-          dropAisle?: number | null
+          dropRow?: number | null
           dropProgress?: number | null
-          aisleCount?: number | null
-          aisleSpacing?: number | null
-          aisleWidth?: number | null
+          rowCount?: number | null
+          rowSpacing?: number | null
+          rowThickness?: number | null
           startOffset?: number | null
           walkwayWidth?: number | null
-          crossAisleBuffer?: number | null
+          crossRowBuffer?: number | null
           outerWalkwayOffset?: number | null
           storeWidth?: number | null
           storeHeight?: number | null
@@ -63,14 +63,14 @@ export const resolvers = {
         robotCount,
         trackedRobotId,
         pickupProductId,
-        dropAisle,
+        dropRow,
         dropProgress,
-        aisleCount,
-        aisleSpacing,
-        aisleWidth,
+        rowCount,
+        rowSpacing,
+        rowThickness,
         startOffset,
         walkwayWidth,
-        crossAisleBuffer,
+        crossRowBuffer,
         outerWalkwayOffset,
         storeWidth,
         storeHeight,
@@ -110,14 +110,14 @@ export const resolvers = {
                 robotCount,
                 trackedRobotId,
                 pickupProductId,
-                dropAisle,
+                dropRow,
                 dropProgress,
-                aisleCount,
-                aisleSpacing,
-                aisleWidth,
+                rowCount,
+                rowSpacing,
+                rowThickness,
                 startOffset,
                 walkwayWidth,
-                crossAisleBuffer,
+                crossRowBuffer,
                 outerWalkwayOffset,
                 storeWidth,
                 storeHeight,
@@ -131,14 +131,14 @@ export const resolvers = {
               robotCount,
               trackedRobotId,
               pickupProductId,
-              dropAisle,
+              dropRow,
               dropProgress,
-              aisleCount,
-              aisleSpacing,
-              aisleWidth,
+              rowCount,
+              rowSpacing,
+              rowThickness,
               startOffset,
               walkwayWidth,
-              crossAisleBuffer,
+              crossRowBuffer,
               outerWalkwayOffset,
               storeWidth,
               storeHeight,

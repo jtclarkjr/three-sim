@@ -64,6 +64,8 @@ fn find_nearest_walkable(col: i32, row: i32, grid: &[Vec<bool>]) -> (i32, i32) {
     }
     let mut visited = HashSet::new();
     let mut queue = vec![(col, row)];
+    let max_col = grid.first().map(|v| v.len() as i32).unwrap_or(0);
+    let max_row = grid.len() as i32;
     while let Some((c, r)) = queue.pop() {
         if !visited.insert((c, r)) {
             continue;
@@ -76,17 +78,19 @@ fn find_nearest_walkable(col: i32, row: i32, grid: &[Vec<bool>]) -> (i32, i32) {
         {
             return (c, r);
         }
-        if c > 0 {
-            queue.push((c - 1, r))
-        }
-        if c + 1 < grid.first().map(|v| v.len() as i32).unwrap_or(0) {
-            queue.push((c + 1, r))
-        }
+        // Push in reverse priority order (last pushed = first popped)
+        // Prefer right (outer corridor) by pushing it last
         if r > 0 {
             queue.push((c, r - 1))
         }
-        if r + 1 < grid.len() as i32 {
+        if r + 1 < max_row {
             queue.push((c, r + 1))
+        }
+        if c > 0 {
+            queue.push((c - 1, r))
+        }
+        if c + 1 < max_col {
+            queue.push((c + 1, r))
         }
     }
     (col, row)

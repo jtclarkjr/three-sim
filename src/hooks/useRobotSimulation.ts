@@ -1,30 +1,33 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   MAX_ROBOT_SPEED,
-  aisleConfigToBuffer,
-  getAisleCenterCoord,
+  getRowCenterCoord,
+  rowConfigToBuffer,
   transformPosition
 } from '@/components/store-map/mockData'
 import type {
-  AisleConfig,
   Product,
   Robot,
   RobotTask,
-  RobotTaskPhase
+  RobotTaskPhase,
+  RowConfig
 } from '@/components/store-map/types'
-import { DEFAULT_AISLE_CONFIG } from '@/components/store-map/types'
+import { DEFAULT_ROW_CONFIG } from '@/components/store-map/types'
 import { loadWasm } from '@/wasm/loadWasm'
 
 const UPDATE_INTERVAL = 50
 const IDLE_MARGIN = 15
 
-function getIdleDestination(config: AisleConfig) {
-  const aisleIndex = Math.floor(Math.random() * config.count)
-  const x = getAisleCenterCoord(aisleIndex, config)
+function getIdleDestination(config: RowConfig) {
+  const numWalkways = Math.max(1, config.count - 1)
+  const betweenRowNum = Math.floor(Math.random() * numWalkways)
+  const rowX = getRowCenterCoord(betweenRowNum, config)
+  const nextRowX = getRowCenterCoord(betweenRowNum + 1, config)
+  const x = (rowX + nextRowX) / 2
   const y =
-    -config.storeHeight / 2 +
-    IDLE_MARGIN +
-    Math.random() * (config.storeHeight - IDLE_MARGIN * 2)
+    Math.random() > 0.5
+      ? config.storeHeight / 2 - IDLE_MARGIN
+      : -config.storeHeight / 2 + IDLE_MARGIN
   return transformPosition(x, y, config.orientation)
 }
 
@@ -80,11 +83,11 @@ function computePath(
   robot: Robot,
   target: { x: number; y: number },
   preferOuterWalkway: boolean,
-  config: AisleConfig
+  config: RowConfig
 ): { x: number; y: number }[] {
   const start = new Float32Array([robot.x, robot.y])
   const end = new Float32Array([target.x, target.y])
-  const configBuffer = aisleConfigToBuffer(config)
+  const configBuffer = rowConfigToBuffer(config)
   const result = wasmModule.computePath(
     start,
     end,
@@ -148,7 +151,7 @@ export function useRobotSimulation(
   products: Product[],
   activeCommand?: RobotTask | null,
   onCommandComplete?: (commandId: string) => void,
-  aisleConfig: AisleConfig = DEFAULT_AISLE_CONFIG
+  rowConfig: RowConfig = DEFAULT_ROW_CONFIG
 ) {
   const [robots, setRobots] = useState<Robot[]>(initialRobots)
   const [wasmModule, setWasmModule] = useState<Awaited<
@@ -207,8 +210,15 @@ export function useRobotSimulation(
                 existingTask.waypointIndex >= existingTask.waypoints.length ||
                 existingTask.waypointsTarget !== currentTargetKey
 
+              const preferOuterWalkway = existingTask.phase === 'toProduct'
               const plannedPath = shouldPlanPath
-                ? computePath(wasmModule, robot, target, true, aisleConfig)
+                ? computePath(
+                    wasmModule,
+                    robot,
+                    target,
+                    preferOuterWalkway,
+                    rowConfig
+                  )
                 : null
 
               const waypoints = shouldPlanPath
@@ -239,7 +249,7 @@ export function useRobotSimulation(
 
         let nextRobots = withCommands
 
-        const configBuffer = aisleConfigToBuffer(aisleConfig)
+        const configBuffer = rowConfigToBuffer(rowConfig)
 
         if (autopilotRobots.length > 0) {
           const robotBuffer = flattenRobots(autopilotRobots)
@@ -316,8 +326,8 @@ export function useRobotSimulation(
                 wasmModule,
                 robot,
                 robot.task.dropTarget,
-                true,
-                aisleConfig
+                false,
+                rowConfig
               )
               const firstDropWaypoint = dropPath[0] ?? robot.task.dropTarget
               return {
@@ -337,7 +347,7 @@ export function useRobotSimulation(
 
             if (robot.task.phase === 'toDropoff') {
               onCommandComplete?.(robot.task.id)
-              const idleDestination = getIdleDestination(aisleConfig)
+              const idleDestination = getIdleDestination(rowConfig)
               return {
                 ...robot,
                 carryingProductId: undefined,
@@ -359,7 +369,7 @@ export function useRobotSimulation(
     }, UPDATE_INTERVAL)
 
     return () => clearInterval(intervalId)
-  }, [activeCommand, onCommandComplete, products, wasmModule, aisleConfig])
+  }, [activeCommand, onCommandComplete, products, rowConfig, wasmModule])
 
   useEffect(() => {
     setRobots(initialRobots)

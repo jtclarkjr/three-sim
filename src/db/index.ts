@@ -61,14 +61,14 @@ const ensureSchema = (sqlite: SqliteLike) => {
       robot_count integer DEFAULT 30 NOT NULL,
       tracked_robot_id text,
       pickup_product_id text,
-      drop_aisle integer DEFAULT 1,
+      drop_row integer DEFAULT 1,
       drop_progress integer DEFAULT 50,
-      aisle_count integer DEFAULT 6,
-      aisle_spacing real DEFAULT 40,
-      aisle_width real DEFAULT 6,
+      row_count integer DEFAULT 6,
+      row_spacing real DEFAULT 40,
+      row_thickness real DEFAULT 6,
       start_offset real DEFAULT 20,
       walkway_width real DEFAULT 10,
-      cross_aisle_buffer real DEFAULT 4,
+      cross_row_buffer real DEFAULT 4,
       outer_walkway_offset real DEFAULT 12,
       store_width real DEFAULT 250,
       store_height real DEFAULT 150,
@@ -92,20 +92,25 @@ const ensureSchema = (sqlite: SqliteLike) => {
     'robot_count integer DEFAULT 30 NOT NULL',
     'tracked_robot_id text',
     'pickup_product_id text',
-    'drop_aisle integer DEFAULT 1',
+    'drop_row integer DEFAULT 1',
     'drop_progress integer DEFAULT 50',
-    'aisle_count integer DEFAULT 6',
-    'aisle_spacing real DEFAULT 40',
-    'aisle_width real DEFAULT 6',
+    'row_count integer DEFAULT 6',
+    'row_spacing real DEFAULT 40',
+    'row_thickness real DEFAULT 6',
     'start_offset real DEFAULT 20',
     'walkway_width real DEFAULT 10',
-    'cross_aisle_buffer real DEFAULT 4',
+    'cross_row_buffer real DEFAULT 4',
     'outer_walkway_offset real DEFAULT 12',
     'store_width real DEFAULT 250',
     'store_height real DEFAULT 150',
     "orientation text DEFAULT 'vertical'",
     'updated_at integer DEFAULT (unixepoch()) NOT NULL'
   ]
+
+  const hasLegacyAisle = existingColumns.has('aisle_count')
+  const hasLegacyDrop = existingColumns.has('drop_aisle')
+  const hasLegacyCross = existingColumns.has('cross_aisle_buffer')
+  const hasLegacyRowWidth = existingColumns.has('row_width')
 
   for (const columnDefinition of columnsToEnsure) {
     const columnName = columnDefinition.split(' ')[0]
@@ -114,6 +119,36 @@ const ensureSchema = (sqlite: SqliteLike) => {
         `ALTER TABLE simulation_config ADD COLUMN ${columnDefinition};`
       )
     }
+  }
+
+  if (hasLegacyAisle) {
+    runSql(
+      'UPDATE simulation_config SET row_count = COALESCE(row_count, aisle_count);'
+    )
+    runSql(
+      'UPDATE simulation_config SET row_spacing = COALESCE(row_spacing, aisle_spacing);'
+    )
+    runSql(
+      'UPDATE simulation_config SET row_thickness = COALESCE(row_thickness, aisle_width);'
+    )
+  }
+
+  if (hasLegacyRowWidth) {
+    runSql(
+      'UPDATE simulation_config SET row_thickness = COALESCE(row_thickness, row_width);'
+    )
+  }
+
+  if (hasLegacyDrop) {
+    runSql(
+      'UPDATE simulation_config SET drop_row = COALESCE(drop_row, drop_aisle);'
+    )
+  }
+
+  if (hasLegacyCross) {
+    runSql(
+      'UPDATE simulation_config SET cross_row_buffer = COALESCE(cross_row_buffer, cross_aisle_buffer);'
+    )
   }
 }
 

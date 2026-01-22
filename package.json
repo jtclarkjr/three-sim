@@ -58,7 +58,7 @@
     "drizzle-kit": "^0.31.8",
     "jsdom": "^27.4.0",
     "typescript": "^5.9.3",
-    "vite": "npm:rolldown-vite@latest",
+    "vite": "8.0.0-beta.8",
     "vitest": "^4.0.17",
     "web-vitals": "^5.1.0"
   }

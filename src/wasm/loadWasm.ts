@@ -27,7 +27,10 @@ export type WasmApi = {
     products: Float32Array,
     config: Float32Array
   ) => Float32Array | number[]
-  hasArrivedAtWaypoint: (positions: Float32Array, config: Float32Array) => number
+  hasArrivedAtWaypoint: (
+    positions: Float32Array,
+    config: Float32Array
+  ) => number
 }
 
 let wasmModulePromise: Promise<WasmApi> | null = null

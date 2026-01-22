@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  MAX_ROBOT_SPEED,
   getRowCenterCoord,
+  MAX_ROBOT_SPEED,
   rowConfigToBuffer,
   transformPosition
 } from '@/components/store-map/mockData'
@@ -305,7 +305,9 @@ export function useRobotSimulation(
               ? waypoints[waypointIndex]
               : null) ??
               robot.task?.dropTarget ?? { x: robot.destX, y: robot.destY }
-            if (typeof wasmModule.moveRobotToWaypointWithProducts === 'function') {
+            if (
+              typeof wasmModule.moveRobotToWaypointWithProducts === 'function'
+            ) {
               const robotData = new Float32Array([
                 robot.x,
                 robot.y,

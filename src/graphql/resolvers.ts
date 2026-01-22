@@ -29,7 +29,10 @@ export const resolvers = {
 
     async productCount() {
       const { db, products } = await getDb()
-      const result = await db.select({ count: products.id }).from(products).all()
+      const result = await db
+        .select({ count: products.id })
+        .from(products)
+        .all()
       return result.length
     }
   },
@@ -105,8 +108,7 @@ export const resolvers = {
             .all()
 
           if (existingConfig.length > 0) {
-            tx
-              .update(simulationConfig)
+            tx.update(simulationConfig)
               .set({
                 productCount,
                 robotCount,
@@ -128,25 +130,27 @@ export const resolvers = {
               .where(eq(simulationConfig.id, 1))
               .run()
           } else {
-            tx.insert(simulationConfig).values({
-              id: 1,
-              productCount,
-              robotCount,
-              trackedRobotId,
-              pickupProductId,
-              dropRow,
-              dropProgress,
-              rowCount,
-              rowSpacing,
-              rowThickness,
-              startOffset,
-              walkwayWidth,
-              crossRowBuffer,
-              outerWalkwayOffset,
-              storeWidth,
-              storeHeight,
-              orientation
-            }).run()
+            tx.insert(simulationConfig)
+              .values({
+                id: 1,
+                productCount,
+                robotCount,
+                trackedRobotId,
+                pickupProductId,
+                dropRow,
+                dropProgress,
+                rowCount,
+                rowSpacing,
+                rowThickness,
+                startOffset,
+                walkwayWidth,
+                crossRowBuffer,
+                outerWalkwayOffset,
+                storeWidth,
+                storeHeight,
+                orientation
+              })
+              .run()
           }
 
           tx.delete(products).run()
@@ -154,8 +158,7 @@ export const resolvers = {
           const CHUNK_SIZE = 100
           for (let i = 0; i < productList.length; i += CHUNK_SIZE) {
             const chunk = productList.slice(i, i + CHUNK_SIZE)
-            tx
-              .insert(products)
+            tx.insert(products)
               .values(
                 chunk.map((p) => ({
                   id: p.id,

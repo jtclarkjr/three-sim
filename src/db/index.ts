@@ -41,7 +41,7 @@ const ensureSchema = (sqlite: SqliteLike) => {
 
   const getTableColumns = (tableName: string) => {
     const pragma = `PRAGMA table_info(${tableName})`
-    let rows: Array<{ name?: string }> = []
+    let rows: Array<{ name?: string } | undefined> = []
 
     if (sqlite.prepare) {
       const stmt = sqlite.prepare(pragma)
@@ -51,7 +51,12 @@ const ensureSchema = (sqlite: SqliteLike) => {
       rows = stmt.all?.() ?? []
     }
 
-    return new Set(rows.map((row) => row.name).filter(Boolean))
+    return new Set(
+      rows
+        .filter((row): row is { name?: string } => row !== undefined)
+        .map((row) => row.name)
+        .filter(Boolean)
+    )
   }
 
   runSql(
@@ -115,9 +120,7 @@ const ensureSchema = (sqlite: SqliteLike) => {
   for (const columnDefinition of columnsToEnsure) {
     const columnName = columnDefinition.split(' ')[0]
     if (!existingColumns.has(columnName)) {
-      runSql(
-        `ALTER TABLE simulation_config ADD COLUMN ${columnDefinition};`
-      )
+      runSql(`ALTER TABLE simulation_config ADD COLUMN ${columnDefinition};`)
     }
   }
 

@@ -16,7 +16,7 @@ async function main() {
       robotCount: defaultRobotCount,
       trackedRobotId: 'robot-0',
       pickupProductId: 'product-0',
-      dropAisle: 1,
+      dropRow: 1,
       dropProgress: 50
     })
     .onConflictDoUpdate({
@@ -26,7 +26,7 @@ async function main() {
         robotCount: defaultRobotCount,
         trackedRobotId: 'robot-0',
         pickupProductId: 'product-0',
-        dropAisle: 1,
+        dropRow: 1,
         dropProgress: 50
       }
     })

@@ -27,13 +27,8 @@ export function transformPosition(
   return orientation === 'horizontal' ? { x: y, y: x } : { x, y }
 }
 
-export function getRowCenterCoord(
-  rowIndex: number,
-  config: RowConfig
-): number {
-  return (
-    -config.storeWidth / 2 + config.startOffset + rowIndex * config.spacing
-  )
+export function getRowCenterCoord(rowIndex: number, config: RowConfig): number {
+  return -config.storeWidth / 2 + config.startOffset + rowIndex * config.spacing
 }
 
 export const generateProducts = (
@@ -134,8 +129,7 @@ export const generateRobots = (
       y: pos.y,
       orientation: Math.random() * Math.PI * 2,
       speed:
-        MIN_ROBOT_SPEED +
-        Math.random() * (MAX_ROBOT_SPEED - MIN_ROBOT_SPEED),
+        MIN_ROBOT_SPEED + Math.random() * (MAX_ROBOT_SPEED - MIN_ROBOT_SPEED),
       destX: destPos.x,
       destY: destPos.y
     })

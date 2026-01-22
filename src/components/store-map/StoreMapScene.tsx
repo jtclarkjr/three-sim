@@ -65,7 +65,7 @@ const FollowCamera = ({
 }: {
   enabled: boolean
   target?: Robot | null
-  controlsRef: RefObject<OrbitControlsType>
+  controlsRef: RefObject<OrbitControlsType | null>
   followOffset: Vector3
 }) => {
   const { camera } = useThree()
@@ -84,6 +84,7 @@ const FollowCamera = ({
     targetRef.current = target ?? null
   }, [target])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: controlsRef methods are stable refs
   useEffect(() => {
     hasOffset.current = false
     if (!enabled || !target) return
@@ -94,7 +95,7 @@ const FollowCamera = ({
     camera.position.copy(desiredPos.current)
     controlsRef.current?.target.copy(targetPos.current)
     controlsRef.current?.update()
-  }, [camera, enabled, followOffset, target?.id])
+  }, [camera, enabled, followOffset, target])
 
   useEffect(() => {
     const controls = controlsRef.current
@@ -172,25 +173,16 @@ export const StoreMapScene = ({
   const dropTarget = activeCommand?.dropTarget ?? null
 
   const cameraDistance = useMemo(() => {
-    const maxDimension = Math.max(
-      rowConfig.storeWidth,
-      rowConfig.storeHeight
-    )
+    const maxDimension = Math.max(rowConfig.storeWidth, rowConfig.storeHeight)
     return maxDimension * 0.8
   }, [rowConfig.storeWidth, rowConfig.storeHeight])
 
   const maxCameraDistance = useMemo(() => {
-    const maxDimension = Math.max(
-      rowConfig.storeWidth,
-      rowConfig.storeHeight
-    )
+    const maxDimension = Math.max(rowConfig.storeWidth, rowConfig.storeHeight)
     return maxDimension * 2
   }, [rowConfig.storeWidth, rowConfig.storeHeight])
   const followOffset = useMemo(() => {
-    const maxDimension = Math.max(
-      rowConfig.storeWidth,
-      rowConfig.storeHeight
-    )
+    const maxDimension = Math.max(rowConfig.storeWidth, rowConfig.storeHeight)
     return new Vector3(0, maxDimension * 0.22, maxDimension * 0.28)
   }, [rowConfig.storeWidth, rowConfig.storeHeight])
   const orbitControlsRef = useRef<OrbitControlsType>(null)
